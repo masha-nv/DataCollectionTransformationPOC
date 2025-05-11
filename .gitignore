@@ -1,0 +1,15 @@
+# Python
+*.pyc
+__pycache__/
+*.sqlite3
+.env
+.venv/
+
+# Node.js
+node_modules/
+build/
+dist/
+.env
+
+# macOS
+.DS_Store
