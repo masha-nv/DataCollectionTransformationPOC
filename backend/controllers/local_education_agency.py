@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query
+from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
 import io 
 import pandas as pd
 from sqlmodel import Session, select
@@ -71,4 +71,35 @@ async def upload_file(
     }
     
     
+@router.post("/update-lea-record")
+async def update_lea_record(
+    data: dict = Body(...),
+    session: Session = Depends(get_session)
+): 
+    district_id = data.get('DistrictNCESID')
+    if not district_id: 
+        raise HTTPException(status_code=400, detail='DistrictNCESID is required')
     
+    lea = session.get(LocalEducationAgency, district_id)
+    if not lea: 
+        raise HTTPException(status_code=404, detail="Record not found") 
+    
+    for key, value in data.items():
+        if hasattr(lea, key):
+            setattr(lea, key, value)
+            
+    session.add(lea)
+    session.commit()
+    session.refresh(lea) 
+    return lea
+
+
+@router.delete('/lea-record/{district_id}')
+async def delete_record(district_id: str, session: Session = Depends(get_session)):
+    lea = session.get(LocalEducationAgency, district_id)
+    if not lea:
+        raise HTTPException(status_code=404, detail='Record not found')
+    
+    session.delete(lea)
+    session.commit()
+    return {"message": district_id}
