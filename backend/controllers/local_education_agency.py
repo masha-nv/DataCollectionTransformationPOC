@@ -103,3 +103,23 @@ async def delete_record(district_id: str, session: Session = Depends(get_session
     session.delete(lea)
     session.commit()
     return {"message": district_id}
+
+
+@router.delete('/lea-records')
+async def delete_records(
+    district_ids: List[str] = Body(...),
+    session: Session = Depends(get_session)
+):
+    # Query all records matching the provided IDs
+    statement = select(LocalEducationAgency).where(LocalEducationAgency.DistrictNCESID.in_(district_ids))
+    results = session.exec(statement).all()
+    
+    if not results:
+        raise HTTPException(status_code=404, detail='No records found for the provided IDs')
+
+    # Delete each record
+    for lea in results:
+        session.delete(lea)
+        
+    session.commit()
+    return {"message": f"Deleted {len(results)} records", "deleted_ids": district_ids}
