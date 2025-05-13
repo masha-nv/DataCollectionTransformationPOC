@@ -1,15 +1,39 @@
-# Python
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.sqlite3
-.env
-.venv/
+*.py[cod]
+*$py.class
 
-# Node.js
-node_modules/
-build/
-dist/
-.env
+# Virtual environment
+poc-venv/
+.env/
 
-# macOS
+# VS Code settings
+.vscode/
+
+# macOS system files
 .DS_Store
+
+# Python env files
+.env
+*.env
+
+# Test cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# MyPy
+.mypy_cache/
+
+# PyInstaller
+dist/
+build/
+
+# SQLite
+*.sqlite3
+
+# Logs
+*.log
