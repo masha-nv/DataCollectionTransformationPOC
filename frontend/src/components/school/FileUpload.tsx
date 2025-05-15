@@ -33,7 +33,7 @@ const FileUpload = () => {
     if (!file) return;
     const formData = new FormData();
     formData.append("file", file);
-    const response = await api.post("/lea", formData, {
+    const response = await api.post("/school", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     setLeaUploadResponse(response.data);
