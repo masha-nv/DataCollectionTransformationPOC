@@ -8,21 +8,22 @@ import {
 import Paper from "@mui/material/Paper";
 import { api } from "../../api/api";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Toolbar from "@mui/material/Toolbar";
+import Header from "../../shared/Header";
 
 const columns: GridColDef[] = [
-  { field: "LEANAME", headerName: "Name", width: 300 },
-  { field: "LOC_CITY", headerName: "City", width: 200 },
-  { field: "LOC_STATE", headerName: "State", width: 200 },
-  { field: "OPERATIONSTATUS", headerName: "Operation Status", width: 200 },
+  { field: "lea_name", headerName: "Name", width: 300 },
+  { field: "loc_city", headerName: "City", width: 200 },
+  { field: "loc_state", headerName: "State", width: 200 },
+  { field: "operational_status", headerName: "Operation Status", width: 200 },
   {
-    field: "LOC_ZIPCODE",
+    field: "loc_zipcode",
     headerName: "ZipCode",
     width: 200,
   },
   {
-    field: "SCHOOLYEAR",
+    field: "school_year",
     headerName: "School Year",
     width: 200,
   },
@@ -30,25 +31,31 @@ const columns: GridColDef[] = [
 
 const paginationModel = { page: 0, pageSize: 5 };
 
-export default function DataTable() {
+export default function LEATable() {
   const navigate = useNavigate();
   const [pageLimit, setPageLimit] = React.useState<number>(5);
-  async function handleGetAllleasData() {
-    const response = await api.get(`/lea-data?limit=${pageLimit}`);
+  const [searchParams] = useSearchParams();
+
+  async function getData() {
+    const fileId = searchParams.get("fileId");
+    const endpoint = fileId
+      ? `/lea/${fileId}?limit=${pageLimit}`
+      : `/lea?limit=${pageLimit}`;
+    const response = await api.get(endpoint);
     setData(response.data);
   }
   async function handleDeleteButtonClick() {
     if (!selectedIds) return;
-    const response = await api.delete(`/lea-records`, {
+    const response = await api.delete(`/lea`, {
       data: [...selectedIds],
     });
     if (response.status == 200) {
-      await handleGetAllleasData();
+      await getData();
     }
   }
 
   React.useEffect(() => {
-    handleGetAllleasData();
+    getData();
   }, [pageLimit]);
 
   const [data, setData] = React.useState<any[]>();
@@ -58,9 +65,9 @@ export default function DataTable() {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1100, margin: "2rem auto" }}>
-      <Typography variant='h4' gutterBottom>
-        Local Education Agency{" "}
-      </Typography>
+      <Box sx={{ textAlign: "center" }}>
+        <Header subtitle='Local Education Agency' />
+      </Box>
       <Paper sx={{ height: "fit-content", width: "100%" }}>
         <Toolbar>
           {!!selectedIds?.size && (
@@ -82,7 +89,7 @@ export default function DataTable() {
         </Toolbar>
         <DataGrid
           showToolbar={false}
-          getRowId={(row) => row["DistrictNCESID"]}
+          getRowId={(row) => row["district_nces_id"]}
           rows={data}
           columns={columns}
           initialState={{ pagination: { paginationModel } }}
@@ -99,6 +106,7 @@ export default function DataTable() {
         />
       </Paper>
 
+      <Button onClick={() => navigate("/lea")}>Back</Button>
       <Button onClick={() => navigate("/")}>Home</Button>
     </Box>
   );
