@@ -23,21 +23,21 @@ def verify_password(password:str, hash: str) -> bool:
 def create_access_token(user_data:dict, expiry:timedelta = None, refresh: bool = False):
     payload={
         **user_data,
-        "exp": datetime.now() + (expiry if expiry is not None else timedelta(seconds=ACCESS_TOKEN_EXP)),
-        "iat": datetime.now(),
+        "exp": datetime.utcnow() + (expiry if expiry is not None else timedelta(seconds=ACCESS_TOKEN_EXP)),
+        "iat": datetime.utcnow(),
         "jti": str(uuid.uuid4()),
         "refresh": refresh
     }
     secret = os.getenv("JWT_SECRET")
-    algorithm = os.getenv("JWR_ALGORYTHM")
+    algorithm = os.getenv("JWT_ALGORITHM")
     
     if not secret:
         raise ValueError("JWT_SECRET environment variable is not set.")
     if not algorithm:
-        raise ValueError("JWR_ALGORYTHM environment variable is not set.")
+        raise ValueError("JWT_ALGORITHM environment variable is not set.")
     
     token=jwt.encode(
-        payload=payload,
+        claims=payload,
         key=secret,
         algorithm=algorithm
     )
@@ -47,7 +47,7 @@ def create_access_token(user_data:dict, expiry:timedelta = None, refresh: bool =
 
 def decode_token(token:str) -> dict:
     secret = os.getenv("JWT_SECRET")
-    algorithm = os.getenv("JWR_ALGORYTHM")
+    algorithm = os.getenv("JWT_ALGORITHM")
     try:
         token_data = jwt.decode(jwt=token, key=secret, algorythms=[algorithm])
         return token_data 
