@@ -14,20 +14,15 @@ const Header = ({ subtitle }: { subtitle?: string }) => {
         padding: "1rem 2rem",
         height: "10vh",
       }}>
-      <img
-        src={DepartmentOfEducationIcon}
-        width={"100vh"}
-        style={{
-          float: "left",
-          paddingLeft: "2rem",
-        }}
-      />
+      <img src={DepartmentOfEducationIcon} height={"100vh"} />
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          alignContent: "center",
           justifyContent: "center",
+          marginLeft: "-20vh",
         }}>
         <Typography variant='h4' gutterBottom fontWeight={"bold"} color='white'>
           ED DataFlow

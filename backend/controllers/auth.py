@@ -49,7 +49,9 @@ async def login_users(login_data: UserLoginModel, session:Session = Depends(get_
                     "refresh_token": refresh_token,
                     "user": {
                         "email": user.email,
-                        "id": str(user.id)
+                        "id": str(user.id),
+                        "first_name": user.first_name,
+                        "last_name": user.last_name
                     }
                 }
             )

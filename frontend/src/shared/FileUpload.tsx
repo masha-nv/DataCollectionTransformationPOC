@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { api } from "../../api/api";
-import { Typography, Box, Button } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
+import { api } from "../api/api";
+import { Typography, Box, Button, IconButton } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -16,12 +17,13 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-const FileUpload = () => {
+const FileUpload = ({ postUrl }: { postUrl: string }) => {
   const [leaUploadResponse, setLeaUploadResponse] = useState<{
     inserted: number;
     message: string;
   }>();
   const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (file) {
@@ -33,7 +35,7 @@ const FileUpload = () => {
     if (!file) return;
     const formData = new FormData();
     formData.append("file", file);
-    const response = await api.post("/lea", formData, {
+    const response = await api.post(postUrl, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     setLeaUploadResponse(response.data);
@@ -51,15 +53,34 @@ const FileUpload = () => {
 
   return (
     <Box sx={{ marginTop: 10 }}>
-      <Button
-        component='label'
-        role={undefined}
-        variant='contained'
-        tabIndex={-1}
-        startIcon={<CloudUploadIcon />}>
-        Upload LEA files
-        <VisuallyHiddenInput type='file' onChange={onFileChange} />
-      </Button>
+      <Box
+        onClick={() => fileInputRef.current?.click()}
+        sx={{
+          border: "1px dashed #5e7f8d",
+          width: "30rem",
+          height: "10rem",
+          display: "flex",
+          justifyContent: "center",
+          flexDirection: "column",
+          cursor: "pointer",
+        }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            flexDirection: "column",
+            alignContent: "center",
+            alignItems: "center",
+          }}>
+          <AttachFileIcon sx={{ rotate: "45deg" }} />
+          <Typography color='#5e7f8d'>Add an attachment (optional)</Typography>
+          <VisuallyHiddenInput
+            ref={fileInputRef}
+            type='file'
+            onChange={onFileChange}
+          />
+        </Box>
+      </Box>
 
       {leaUploadResponse && (
         <div>
