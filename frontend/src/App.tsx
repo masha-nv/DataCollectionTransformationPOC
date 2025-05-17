@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home/Home";
 import React from "react";
 import LEATable from "./components/local-education-agency/LEATable";
@@ -7,17 +7,32 @@ import LEAHome from "./components/local-education-agency/Home";
 import SchoolHome from "./components/school/Home";
 import SchoolTable from "./components/school/SchoolTable";
 import FileTable from "./components/file/FileTable";
+import Login from "./components/login/login";
+import { ThemeProvider } from "@mui/material";
+import theme from "./styles/theme";
+import Layout from "./shared/Layout";
+
+function ProtectedRouter({ user }) {
+  if (!user) {
+    return <Navigate to='/login' replace />;
+  }
+}
 
 function App() {
   return (
-    <Routes>
-      <Route path='/' element={<Home />} />
-      <Route path='/lea' element={<LEAHome />} />
-      <Route path='/lea/list' element={<LEATable />} />
-      <Route path='/school' element={<SchoolHome />} />
-      <Route path='/school/list' element={<SchoolTable />} />
-      <Route path='/file' element={<FileTable />} />
-    </Routes>
+    <ThemeProvider theme={theme}>
+      <Routes>
+        <Route path='/' element={<Layout />}>
+          <Route path='/' element={<Navigate to='/login' />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/lea' element={<LEAHome />} />
+          <Route path='/lea/list' element={<LEATable />} />
+          <Route path='/school' element={<SchoolHome />} />
+          <Route path='/school/list' element={<SchoolTable />} />
+          <Route path='/file' element={<FileTable />} />
+        </Route>
+      </Routes>
+    </ThemeProvider>
   );
 }
 
