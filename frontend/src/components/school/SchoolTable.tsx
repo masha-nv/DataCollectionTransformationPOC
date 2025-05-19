@@ -69,9 +69,6 @@ export default function LEATable() {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1100, margin: "2rem auto" }}>
-      <Box sx={{ textAlign: "center" }}>
-        <Header subtitle='School' />
-      </Box>
       <Paper sx={{ height: "fit-content", width: "100%" }}>
         <Toolbar>
           {!!selectedIds?.size && (
