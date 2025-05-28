@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { api } from "../../api/api";
 import Typography from "@mui/material/Typography";
 import { Box, Button } from "@mui/material";
-import FileUpload from "../local-education-agency/FileUpload";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../../shared/Header";
 
