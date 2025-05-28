@@ -10,6 +10,8 @@ const Login = () => {
   const [password, setPassword] = useState<string>();
   const navigate = useNavigate();
 
+  console.log("VITE_API_BASE_URL:", (import.meta as any).env.VITE_API_BASE_URL);
+
   async function handleLogin() {
     const res = await api.post("/login", { email, password });
     const data = res.data;
