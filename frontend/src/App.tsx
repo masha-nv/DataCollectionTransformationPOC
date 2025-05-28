@@ -7,7 +7,7 @@ import LEAHome from "./components/local-education-agency/Home";
 import SchoolHome from "./components/school/Home";
 import SchoolTable from "./components/school/SchoolTable";
 import FileTable from "./components/file/FileTable";
-import Login from "./components/login/login";
+import Login from "./components/login/Login";
 import { ThemeProvider } from "@mui/material";
 import theme from "./styles/theme";
 import Layout from "./shared/Layout";
