@@ -101,9 +101,9 @@ export default function DataTable() {
           sx={{ border: 0 }}
         />
       </Paper>
-      {selected && (
+      {/* {selected && (
         <Button onClick={handleNavigateToReport}>View Report</Button>
-      )}
+      )} */}
       <Box
         sx={{
           marginTop: "5rem",

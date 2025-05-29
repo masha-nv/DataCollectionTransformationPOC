@@ -1,23 +1,32 @@
 import { Box, Button, TextField, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useContext, useEffect, useReducer, useState } from "react";
 import Divider from "../../shared/Divider";
 import { api } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import { AuthConstants } from "../../constants/auth";
+import { isAuthenticated } from "../../api/utils";
+import { GlobalStateContext } from "../../../store/GlobalStateProvider";
+import { globalStateReducer, initialState } from "../../../store/globalState";
 
 const Login = () => {
+  const ctx = useContext(GlobalStateContext);
   const [email, setEmail] = useState<string>();
   const [password, setPassword] = useState<string>();
   const navigate = useNavigate();
 
   console.log("VITE_API_BASE_URL:", (import.meta as any).env.VITE_API_BASE_URL);
 
+  useEffect(() => {
+    if (ctx?.state.isLoggedIn) {
+      navigate("/lea");
+    }
+  }, [ctx, ctx?.state, ctx?.state.isLoggedIn]);
+
   async function handleLogin() {
     const res = await api.post("/login", { email, password });
     const data = res.data;
     if (data.access_token) {
-      localStorage.setItem(AuthConstants.ACCESS_TOKEN, data.access_token);
-      localStorage.setItem(AuthConstants.USER, JSON.stringify(data.user));
+      ctx?.dispatch({ type: "login", payload: data });
       navigate("/lea");
     }
   }
