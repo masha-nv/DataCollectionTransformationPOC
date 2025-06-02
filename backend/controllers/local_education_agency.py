@@ -1,10 +1,7 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body
-import io 
-import pandas as pd
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from model.local_education_agency import LEA 
 from database import engine, get_session
-import csv
 from pydantic import ValidationError
 from typing import List, Dict, Any
 from core.constants import ALLOWED_FILE_EXTENSIONS
@@ -19,10 +16,14 @@ async def get_lea_data(
     current_user=Depends(get_current_user),
     offset: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100)):
+    # total count of records 
+    count_stmt = select(func.count()).select_from(LEA)
+    total = session.exec(count_stmt).one()
+    # paginated records
     statement = select(LEA).offset(offset).limit(limit)
     result = session.exec(statement)
     leas = result.all()
-    return leas
+    return {"total": total, "items": leas}
     
     
     

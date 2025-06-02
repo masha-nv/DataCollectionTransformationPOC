@@ -34,19 +34,27 @@ const columns: GridColDef[] = [
   },
 ];
 
-const paginationModel = { page: 0, pageSize: 5 };
-
 export default function DataTable() {
   const navigate = useNavigate();
-  const [pageLimit, setPageLimit] = React.useState<number>(5);
+  const [total, setTotal] = React.useState<number>(0);
+  const [paginationModel, setPaginationModel] = React.useState<{
+    page: number;
+    pageSize: number;
+  }>({ page: 0, pageSize: 5 });
+
   async function getFiles() {
-    const response = await api.get(`/files?limit=${pageLimit}`);
-    setData(response.data);
+    const {
+      data: { items, total },
+    } = await api.get(
+      `/files?limit=${paginationModel.pageSize}&offset=${paginationModel.page}`
+    );
+    setData(items);
+    setTotal(total);
   }
 
   React.useEffect(() => {
     getFiles();
-  }, [pageLimit]);
+  }, [paginationModel]);
 
   const [data, setData] = React.useState<any[]>();
   const [selected, setSelected] = React.useState<GridRowParams | null>(null);
@@ -87,16 +95,17 @@ export default function DataTable() {
           showToolbar={false}
           getRowId={(row) => row["id"]}
           rows={data}
+          rowCount={total}
           columns={columns}
           onRowClick={(e) => {
             console.log(e);
             setSelected(e);
           }}
           initialState={{ pagination: { paginationModel } }}
-          pageSizeOptions={[5, 10]}
+          pageSizeOptions={[5, 10, 25, 50, 100]}
           checkboxSelection={true}
           onPaginationModelChange={(e) => {
-            setPageLimit(e.pageSize);
+            setPaginationModel({ pageSize: e.pageSize, page: e.page });
           }}
           sx={{ border: 0 }}
         />

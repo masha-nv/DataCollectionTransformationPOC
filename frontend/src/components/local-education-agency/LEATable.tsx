@@ -29,21 +29,27 @@ const columns: GridColDef[] = [
   },
 ];
 
-const paginationModel = { page: 0, pageSize: 5 };
-
 export default function LEATable() {
   const navigate = useNavigate();
-  const [pageLimit, setPageLimit] = React.useState<number>(5);
   const [searchParams] = useSearchParams();
+  const [total, setTotal] = React.useState<number>(0);
+  const [paginationModel, setPaginationModel] = React.useState<{
+    page: number;
+    pageSize: number;
+  }>({ page: 0, pageSize: 5 });
 
   async function getData() {
     const fileId = searchParams.get("fileId");
     const endpoint = fileId
-      ? `/lea/${fileId}?limit=${pageLimit}`
-      : `/lea?limit=${pageLimit}`;
-    const response = await api.get(endpoint);
-    setData(response.data);
+      ? `/lea/${fileId}?limit=${paginationModel.pageSize}&offset=${paginationModel.page}`
+      : `/lea?limit=${paginationModel.pageSize}&offset=${paginationModel.page}`;
+    const {
+      data: { items, total },
+    } = await api.get(endpoint);
+    setData(items);
+    setTotal(total);
   }
+
   async function handleDeleteButtonClick() {
     if (!selectedIds) return;
     const response = await api.delete(`/lea`, {
@@ -56,7 +62,7 @@ export default function LEATable() {
 
   React.useEffect(() => {
     getData();
-  }, [pageLimit]);
+  }, [paginationModel]);
 
   const [data, setData] = React.useState<any[]>();
   const [selectedIds, setSelectedIds] = React.useState<Set<GridRowId> | null>(
@@ -85,19 +91,21 @@ export default function LEATable() {
           )}
         </Toolbar>
         <DataGrid
+          paginationMode='server'
           showToolbar={false}
           getRowId={(row) => row["district_nces_id"]}
           rows={data}
+          rowCount={total}
           columns={columns}
           initialState={{ pagination: { paginationModel } }}
-          pageSizeOptions={[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+          pageSizeOptions={[5, 10, 25, 50, 100]}
           checkboxSelection
           onRowSelectionModelChange={(e) => {
             console.log("row selection", e);
             setSelectedIds(e.ids);
           }}
           onPaginationModelChange={(e) => {
-            setPageLimit(e.pageSize);
+            setPaginationModel({ pageSize: e.pageSize, page: e.page });
           }}
           sx={{ border: 0 }}
         />

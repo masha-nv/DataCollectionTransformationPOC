@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Body 
-from sqlmodel import Session, select 
+from sqlmodel import Session, select, func
 from model.school import School 
 from database import engine, get_session 
 import csv 
@@ -16,10 +16,13 @@ async def get_school_data(session:Session = Depends(get_session),
                           current_user=Depends(get_current_user),
                           offset:int = Query(0, ge=0),
                           limit: int = Query(10, ge=1, le=100)):
+    # count
+    count_statement =select(func.count()).select_from(School)
+    count = session.exec(count_statement).one()
     statement = select(School).offset(offset).limit(limit)
     result = session.exec(statement)
     schools = result.all() 
-    return schools
+    return {"total": count, "items": schools}
 
 
 @router.post('/school')
