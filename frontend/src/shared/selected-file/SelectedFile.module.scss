@@ -1,0 +1,18 @@
+@use "../../styles/colors" as colors;
+
+.container {
+  border: 1px dashed colors.$greyDark;
+  background-color: colors.$powederBlue;
+  padding-inline: 1rem;
+}
+
+.innerContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  align-items: center;
+}
+
+.button {
+  text-decoration: underline !important;
+}

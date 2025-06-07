@@ -6,11 +6,12 @@ import {
   GridRowId,
 } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
-import { api } from "../../api/api";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Toolbar from "@mui/material/Toolbar";
-import Header from "../../shared/Header";
+import { api } from "../../../api/api";
+import classes from "./Table.module.scss";
+import BackButton from "../../../shared/back-button/BackButton";
 
 const columns: GridColDef[] = [
   { field: "lea_name", headerName: "Name", width: 300 },
@@ -29,7 +30,7 @@ const columns: GridColDef[] = [
   },
 ];
 
-export default function LEATable() {
+export default function Table() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [total, setTotal] = React.useState<number>(0);
@@ -70,11 +71,15 @@ export default function LEATable() {
   );
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1100, margin: "2rem auto" }}>
-      <Paper sx={{ height: "fit-content", width: "100%" }}>
-        <Toolbar>
+    <>
+      <BackButton text={"Home"} url='/home' />
+      <Box className={classes.container}>
+        <Typography className={classes.title}>
+          Local Education Agency (LEA) Data Upload Tool
+        </Typography>
+        <Paper sx={{ height: "fit-content", width: "100%" }}>
           {!!selectedIds?.size && (
-            <>
+            <Toolbar>
               <Typography
                 sx={{ flex: "1 1 100%" }}
                 color='inherit'
@@ -87,31 +92,49 @@ export default function LEATable() {
                   <GridDeleteIcon />
                 </IconButton>
               </Tooltip>
-            </>
+            </Toolbar>
           )}
-        </Toolbar>
-        <DataGrid
-          paginationMode='server'
-          showToolbar={false}
-          getRowId={(row) => row["district_nces_id"]}
-          rows={data}
-          rowCount={total}
-          columns={columns}
-          initialState={{ pagination: { paginationModel } }}
-          pageSizeOptions={[5, 10, 25, 50, 100]}
-          checkboxSelection
-          onRowSelectionModelChange={(e) => {
-            console.log("row selection", e);
-            setSelectedIds(e.ids);
-          }}
-          onPaginationModelChange={(e) => {
-            setPaginationModel({ pageSize: e.pageSize, page: e.page });
-          }}
-          sx={{ border: 0 }}
-        />
-      </Paper>
 
-      <Button onClick={() => navigate("/lea")}>Back</Button>
-    </Box>
+          <DataGrid
+            paginationMode='server'
+            showToolbar={false}
+            getRowId={(row) => row["district_nces_id"]}
+            rows={data}
+            rowCount={total}
+            columns={columns}
+            initialState={{ pagination: { paginationModel } }}
+            pageSizeOptions={[5, 10, 25, 50, 100]}
+            checkboxSelection
+            onRowSelectionModelChange={(e) => {
+              console.log("row selection", e);
+              setSelectedIds(e.ids);
+            }}
+            onPaginationModelChange={(e) => {
+              setPaginationModel({ pageSize: e.pageSize, page: e.page });
+            }}
+            sx={{ border: 0 }}
+          />
+        </Paper>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "2rem",
+          }}>
+          <Button
+            variant='outlined'
+            color='secondary'
+            onClick={() => navigate("/home")}>
+            Exit tool
+          </Button>
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={() => navigate("/lea")}>
+            Done editing
+          </Button>
+        </Box>
+      </Box>
+    </>
   );
 }

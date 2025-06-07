@@ -1,0 +1,26 @@
+@use "../../../styles/mixins" as mixins;
+
+.title {
+  @include mixins.title-style;
+  margin-bottom: 1rem !important;
+  text-align: start;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5rem;
+  width: 100%;
+}
+
+.innerContainer {
+  width: 60%;
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}

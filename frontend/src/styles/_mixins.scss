@@ -1,0 +1,13 @@
+@use "./fonts" as fonts;
+
+@mixin title-style {
+  font-family: fonts.$title !important;
+  font-size: 2.5rem !important;
+  font-weight: 100 !important;
+}
+
+@mixin subtitle-style {
+  font-family: fonts.$title !important;
+  font-size: 1.5rem !important;
+  font-weight: 100 !important;
+}

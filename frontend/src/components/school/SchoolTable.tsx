@@ -10,7 +10,7 @@ import { api } from "../../api/api";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Toolbar from "@mui/material/Toolbar";
-import Header from "../../shared/Header";
+import Header from "../../shared/header/Header";
 
 const columns: GridColDef[] = [
   { field: "education_entity_name", headerName: "Name", width: 300 },

@@ -1,0 +1,45 @@
+@use "../../styles/colors" as colors;
+@use "../../styles/fonts" as fonts;
+@use "../../styles/mixins" as mixins;
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding-top: 4rem;
+}
+
+.container {
+  width: 40%;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 5px;
+  .title {
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    @include mixins.title-style;
+  }
+}
+
+.noAccount {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.formButtons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.link {
+  color: colors.$greyDark;
+}

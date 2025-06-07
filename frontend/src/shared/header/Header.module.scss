@@ -1,0 +1,26 @@
+@use "../../styles/colors" as colors;
+
+.container {
+  display: flex;
+  background-color: colors.$white;
+  //   width: 100vw;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  height: 5vh;
+}
+
+.logo {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  .logoText {
+    color: colors.$greyDark;
+  }
+}
+
+.verticalBorder {
+  height: 5vh;
+  width: 0.2rem;
+  background-color: colors.$greyDarker;
+}

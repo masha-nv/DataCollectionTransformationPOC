@@ -1,0 +1,7 @@
+@use "../../../styles/mixins" as mixins;
+
+.title {
+  @include mixins.title-style;
+  margin-bottom: 1rem !important;
+  text-align: start;
+}

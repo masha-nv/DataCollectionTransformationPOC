@@ -1,0 +1,16 @@
+input:-webkit-autofill {
+  box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+a,
+a:visited,
+a:hover,
+a:active {
+  color: #0071bc;
+  text-decoration: none;
+}
+
+button {
+  text-transform: none !important;
+}

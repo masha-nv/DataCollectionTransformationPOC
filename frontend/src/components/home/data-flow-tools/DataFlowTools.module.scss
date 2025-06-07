@@ -1,0 +1,18 @@
+@use "../../../styles/mixins" as mixins;
+
+.title {
+  @include mixins.title-style;
+  margin-bottom: 1rem !important;
+  text-align: start;
+}
+
+.cardContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.cardTitle {
+  @include mixins.subtitle-style;
+  margin: 1rem 0 !important;
+}
