@@ -79,11 +79,17 @@ export default function Steps() {
           </Box>
         </React.Fragment>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
           <Box>{activeStep === 0 && <ChooseDataSource />}</Box>
           <Box>{activeStep === 1 && <SelectTransferLocation />}</Box>
           <Box>{activeStep === 2 && <ReviewAndTransfer />}</Box>
-          <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              pt: 2,
+              marginTop: "4rem",
+            }}>
             <Button
               color='secondary'
               variant='outlined'
