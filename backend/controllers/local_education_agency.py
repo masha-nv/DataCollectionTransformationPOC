@@ -38,12 +38,14 @@ async def upload_file(
     
     contents = await file.read() 
     delimiter = '\t' if file.filename.endswith('.tab') or file.filename.endswith('.tsv') else ','
-    
+   
     result = import_file_to_db(
         file_bytes=contents,
         model_class=LEA,
         session=session,
-        delimiter=delimiter
+        delimiter=delimiter,
+        name=file.filename,
+        size=len(contents)
     )
     return result
     

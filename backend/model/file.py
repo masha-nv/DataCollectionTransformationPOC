@@ -17,3 +17,5 @@ class File(SQLModel, table=True):
     file_hash: Optional[str] = Field(default=None,index=True) #validates that no two files contain identical information
     # this may be not needed, since we make sure on School and LEA that their unique ids must be unique
     # eg: lea_ide: str = Field(..., alias="LEA Ide", index=True, unique=True)
+    name: str = Field(..., description='Name of the uploaded file')
+    size: int = Field(..., description='Size of the uploaded file in bytes')

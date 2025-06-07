@@ -8,23 +8,22 @@ import { formatFileSize } from "../../utils/formatFileSize";
 import { useNavigate } from "react-router-dom";
 import CSVIcon from "../CSVIcon";
 
-const FileInfo = () => {
-  const ctx = useContext(FileDataContext);
+const FileInfo = ({ file }) => {
   const navigate = useNavigate();
   useEffect(() => {
-    if (!ctx || !ctx.state || !ctx.state.data.fileName) {
+    if (!file) {
       navigate("..");
     }
-  }, [ctx.state]);
+  }, [file]);
 
   return (
     <Box sx={{ width: "60%" }}>
       <Box className={classes.container}>
         <Box sx={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
           <CSVIcon />
-          <Typography>{ctx?.state.data.fileName}</Typography>
+          <Typography>{file.name}</Typography>
         </Box>
-        <Typography>{formatFileSize(ctx?.state.data.fileSize)}</Typography>
+        <Typography>{formatFileSize(file.size)}</Typography>
       </Box>
     </Box>
   );

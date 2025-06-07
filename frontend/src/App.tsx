@@ -15,6 +15,8 @@ import { isAuthenticated } from "./api/utils";
 import { FileDataProvider } from "../store/fileData/FileDataProvider";
 import SuccessDataUpload from "./shared/success-data-upload/SuccessDataUpload";
 import DataTransferTool from "./components/data-transfer-tool/DataTransferTool";
+import { DataTransferProvider } from "../store/dataTransfer/DataTransferProvider";
+import Success from "./components/data-transfer-tool/steps/success/Success";
 
 function ProtectedRoute({ children }) {
   if (!isAuthenticated()) {
@@ -48,7 +50,16 @@ function App() {
             <Route path='/school/list' element={<SchoolTable />} />
             <Route path='/file' element={<FileTable />} />
             <Route path='/success' element={<SuccessDataUpload />} />
-            <Route path='/data-transfer-tool' element={<DataTransferTool />} />
+            <Route path='/data-transfer-tool/success' element={<Success />} />
+
+            <Route
+              path='/data-transfer-tool'
+              element={
+                <DataTransferProvider>
+                  <DataTransferTool />
+                </DataTransferProvider>
+              }
+            />
           </Route>
         </Route>
       </Routes>

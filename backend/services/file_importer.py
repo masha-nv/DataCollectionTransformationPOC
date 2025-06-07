@@ -13,7 +13,9 @@ def import_file_to_db(
     file_bytes: bytes,
     model_class: Type[SQLModel],
     session: Session,
-    delimiter: str = '\t'
+    delimiter: str = '\t',
+    name: str,
+    size: int
 ) -> Dict[str, Any]:
     """
     Reads file bytes, parses them using pandas, and inserts into DB using model_class.
@@ -44,7 +46,12 @@ def import_file_to_db(
                   'Unknown')
     
     try:
-        file_instance=File(model_type=model_type, file_hash=file_hash)
+        file_instance=File(
+            model_type=model_type,
+            file_hash=file_hash, 
+            name=name,
+            size=size, 
+            )
         session.add(file_instance)
         session.flush() #gets file_instance.id
     

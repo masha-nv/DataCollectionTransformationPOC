@@ -1,13 +1,16 @@
 import { Box, Typography } from "@mui/material";
-import React from "react";
+import React, { useContext } from "react";
 import BackButton from "../back-button/BackButton";
 import classes from "./SuccessDataUpload.module.scss";
 import { useLocation } from "react-router-dom";
 import CheckCircle from "@mui/icons-material/CheckCircleOutline";
 import FileInfo from "../file-info/FileInfo";
+import { FileDataContext } from "../../../store/fileData/FileDataProvider";
 
 const SuccessDataUpload = () => {
+  const ctx = useContext(FileDataContext);
   const { state } = useLocation();
+  console.log("success", ctx?.state.data);
   return (
     <>
       <BackButton text='Home' url='/home' />
@@ -22,7 +25,7 @@ const SuccessDataUpload = () => {
           </Typography>
         </Box>
         <CheckCircle sx={{ fontSize: "10rem", color: "#33754f" }} />
-        <FileInfo />
+        <FileInfo file={ctx?.state.data.file} />
       </Box>
     </>
   );

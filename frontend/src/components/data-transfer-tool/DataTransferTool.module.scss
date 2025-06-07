@@ -1,0 +1,18 @@
+@use "../../styles/mixins" as mixins;
+
+.title {
+  @include mixins.title-style;
+  margin-bottom: 1rem !important;
+  text-align: start;
+}
+
+.container {
+  display: flex;
+  margin-top: 5rem;
+  min-width: 100%;
+  justify-content: center;
+}
+
+.innerContainer {
+  width: 100%;
+}

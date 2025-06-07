@@ -44,8 +44,8 @@ const FileUpload = ({ postUrl }: { postUrl: string }) => {
       type: "upload",
       payload: {
         data: preview_data,
-        fileName: file_name,
-        fileSize: size,
+        file_name: file_name,
+        file_size: size,
         fileId: file_id,
         file: file,
       },
