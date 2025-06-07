@@ -5,6 +5,7 @@ import {
   GridColumnHeaderParams,
   GridRenderCellParams,
   GridRowParams,
+  GridRowSelectionModel,
 } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 import { api } from "../../api/api";
@@ -13,14 +14,14 @@ import { useNavigate } from "react-router-dom";
 import Welcome from "../../shared/Welcome";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import moment from "moment";
+import { DataTransferContext } from "../../../store/dataTransfer/DataTransferProvider";
+import { formatFileSize } from "../../utils/formatFileSize";
 
 const columns: GridColDef[] = [
   {
-    field: "model_type",
-    width: 850,
-    renderHeader: (params: GridColumnHeaderParams) => (
-      <strong>File Types</strong>
-    ),
+    field: "name",
+    width: 500,
+    renderHeader: (params: GridColumnHeaderParams) => <strong>Name</strong>,
   },
   {
     field: "upload_datetime",
@@ -32,11 +33,21 @@ const columns: GridColDef[] = [
       <span>{moment(params.value).format("MM/DD/YYYY")}</span>
     ),
   },
+  {
+    field: "size",
+    width: 200,
+    renderHeader: (params: GridColumnHeaderParams) => <strong>Size</strong>,
+    renderCell: (params: GridRenderCellParams) => (
+      <span>{formatFileSize(params.value)}</span>
+    ),
+  },
 ];
 
 export default function DataTable() {
-  const navigate = useNavigate();
+  const ctx = React.useContext(DataTransferContext);
   const [total, setTotal] = React.useState<number>(0);
+  const [selectedRowIds, setSelectedRowIds] =
+    React.useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
   const [paginationModel, setPaginationModel] = React.useState<{
     page: number;
     pageSize: number;
@@ -50,30 +61,31 @@ export default function DataTable() {
     );
     setData(items);
     setTotal(total);
+    ctx?.dispatch({ type: "files", payload: { files: items } });
   }
 
   React.useEffect(() => {
-    getFiles();
+    if (!ctx?.state.files.length) {
+      getFiles();
+    } else {
+      setData(ctx?.state.files);
+    }
   }, [paginationModel]);
 
   const [data, setData] = React.useState<any[]>();
-  const [selected, setSelected] = React.useState<GridRowParams | null>(null);
-  const [destination, setDestination] = React.useState("msix");
 
-  function handleNavigateToReport() {
-    if (!selected) return;
-    const path =
-      selected?.row.model_type === "LEA"
-        ? `/lea/list?fileId=${selected.id}`
-        : `/school/list?fileId=${selected.id}`;
-    navigate(path);
+  function handleSelectionChange(newSelection) {
+    ctx?.dispatch({ type: "select", payload: { fileIds: newSelection.ids } });
   }
+
+  React.useEffect(() => {
+    const selected = ctx?.state.selectedFiles;
+    setSelectedRowIds({ ...selectedRowIds, ids: selected });
+  }, [ctx, ctx?.state]);
 
   return (
     <Box
       sx={{
-        width: "100%",
-        maxWidth: 1100,
         display: "flex",
         flexDirection: "column",
         alignContent: "center",
@@ -81,15 +93,16 @@ export default function DataTable() {
       }}>
       <Paper sx={{ height: "fit-content", width: "100%" }}>
         <DataGrid
+          onRowSelectionModelChange={handleSelectionChange}
+          disableRowSelectionOnClick
           showToolbar={false}
           getRowId={(row) => row["id"]}
           rows={data}
+          // rowSelectionModel={selectedRowIds}
           rowCount={total}
           columns={columns}
-          onRowClick={(e) => {
-            console.log(e);
-            setSelected(e);
-          }}
+          rowSelectionModel={selectedRowIds}
+          paginationMode='server'
           initialState={{ pagination: { paginationModel } }}
           pageSizeOptions={[5, 10, 25, 50, 100]}
           checkboxSelection={true}

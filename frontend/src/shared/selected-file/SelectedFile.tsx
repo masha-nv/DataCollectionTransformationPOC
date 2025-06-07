@@ -11,8 +11,11 @@ const SelectedFile = () => {
   const navigate = useNavigate();
   const {
     dispatch,
-    state: { data },
+    state: {
+      data: { file },
+    },
   } = useContext(FileDataContext);
+  console.log("data", file);
 
   function onDelete() {
     dispatch({ type: "delete" });
@@ -33,7 +36,7 @@ const SelectedFile = () => {
       <Box className={classes.innerContainer}>
         <Box sx={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
           <CSVIcon />
-          <Typography>{data.fileName}</Typography>
+          <Typography>{file.name}</Typography>
         </Box>
         <Box>
           <Button

@@ -40,7 +40,10 @@ async def upload_file(
         file_bytes=contents,
         model_class=School,
         session=session,
-        delimiter=delimiter
+        delimiter=delimiter,
+        name=file.filename,
+        size=len(contents)
+
     )
     return result
     
