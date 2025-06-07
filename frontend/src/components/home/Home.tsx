@@ -3,26 +3,23 @@ import { api } from "../../api/api";
 import Typography from "@mui/material/Typography";
 import { Box, Button } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import Header from "../../shared/Header";
-
-function LinkComponent() {
-  return <Link to={"lea-list"}></Link>;
-}
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import classes from "./Home.module.scss";
+import Welcome from "./welcome/Welcome";
+import DataFlowTools from "./data-flow-tools/DataFlowTools";
+import FAQ from "./faq/FAQ";
 
 const Home = () => {
   const navigate = useNavigate();
   return (
-    <Box sx={{ width: "100%", maxWidth: 1100, margin: "2rem auto" }}>
-      <Header />
-      <Button onClick={() => navigate("lea")}>
-        Handle LEA Files / Access Reports
-      </Button>
-      <br />
-      <Button onClick={() => navigate("school")}>
-        Handle School Files / Access Reports
-      </Button>
-      <br />
-      <Button onClick={() => navigate("file")}>View all files</Button>
+    <Box className={classes.container}>
+      <Box className={classes.innerContainer}>
+        <Welcome />
+        <DataFlowTools />
+        <FAQ />
+      </Box>
     </Box>
   );
 };

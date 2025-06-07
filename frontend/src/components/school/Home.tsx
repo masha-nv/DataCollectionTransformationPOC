@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import Typography from "@mui/material/Typography";
 import { Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import Header from "../../shared/Header";
+import Header from "../../shared/header/Header";
 import Welcome from "../../shared/Welcome";
-import FileUpload from "../../shared/FileUpload";
+import FileUpload from "../../shared/file-upload/FileUpload";
 
 const Home = () => {
   const navigate = useNavigate();

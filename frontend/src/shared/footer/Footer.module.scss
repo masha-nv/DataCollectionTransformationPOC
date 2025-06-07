@@ -1,0 +1,23 @@
+@use "../../styles/colors" as colors;
+
+.container {
+  display: flex;
+  background-color: colors.$greyLighter;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  height: 5vh;
+  color: colors.$greyDark;
+}
+
+.logo {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.verticalBorder {
+  height: 5vh;
+  width: 0.2rem;
+  background-color: colors.$greyDarker;
+}

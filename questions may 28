@@ -1,4 +1,0 @@
-1. do we need the view report : FileTable > select row > view report
-2. destination for extraction - this api/endpoint is not built. this would require integration with the exisiting endpoint for msix, correct? if so, please confirm we dont need it ?
-3. how does user navigates to the FileTable (ie OME Data Extraction Portal) - currently we just update url to /file
-4. when user logs in - currently they land on /lea - what is the desired behavior?
