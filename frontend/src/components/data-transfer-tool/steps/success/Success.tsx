@@ -23,7 +23,7 @@ const Success = () => {
             Data successfully transferred!
           </Typography>
           <Typography className={classes.subtitle}>
-            You data has been successfully uploaded. Thank you!
+            Your data has been successfully uploaded. Thank you!
           </Typography>
         </Box>
         <CheckCircle sx={{ fontSize: "10rem", color: "#33754f" }} />
