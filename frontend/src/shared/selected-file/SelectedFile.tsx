@@ -36,7 +36,7 @@ const SelectedFile = () => {
       <Box className={classes.innerContainer}>
         <Box sx={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
           <CSVIcon />
-          <Typography>{file.name}</Typography>
+          <Typography>{file?.name}</Typography>
         </Box>
         <Box>
           <Button
