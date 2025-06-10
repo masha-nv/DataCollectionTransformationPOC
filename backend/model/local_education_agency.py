@@ -6,7 +6,7 @@ import uuid
 class LEA(SQLModel, table=True):
     __tablename__ = "lea"
     id:str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    district_nces_id: str = Field(..., alias="DistrictNCESID", index=True, unique=True)
+    district_nces_id: str = Field(..., alias="DistrictNCESID", index=True, unique=False)
     fips_state_code: str = Field(..., alias="FIPSStateCode")
     lea_name: str = Field(..., alias="LEANAME")
     state_lea_id_number: str = Field(..., alias="StateLEAIDNumber")
