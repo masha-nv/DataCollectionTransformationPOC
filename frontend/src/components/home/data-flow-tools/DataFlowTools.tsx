@@ -26,10 +26,8 @@ const DataFlowTools = () => {
               Who this is for:
             </Typography>
             <ul style={{ marginLeft: "1.5rem" }}>
-              <li>Public school districts</li>
-              <li>Charter school organizations</li>
-              <li>Local education agencies (LEAs)</li>
-              <li>Education data coordinators</li>
+              <li>State Education Agencies</li>
+              <li>Education Data Coordinators</li>
             </ul>
             <CardActions sx={{ marginTop: "3rem" }}>
               <Button
@@ -56,11 +54,8 @@ const DataFlowTools = () => {
               Who this is for:
             </Typography>
             <ul style={{ marginLeft: "1.5rem" }}>
-              <li>School districts</li>
-              <li>Individual schools</li>
-              <li>Charter school organizations</li>
-              <li>Local educational agencies (LEAs)</li>
-              <li>Education data administrators</li>
+              <li>State Education Agencies</li>
+              <li>Education Data Coordinators</li>
             </ul>
             <CardActions sx={{ marginTop: "3rem" }}>
               <Button color='primary' variant='contained'>
@@ -84,8 +79,7 @@ const DataFlowTools = () => {
               Who this is for:
             </Typography>
             <ul style={{ marginLeft: "1.5rem" }}>
-              <li>Public school districts</li>
-              <li>Public schools</li>
+              <li>MSIX System Administrator</li>
             </ul>
             <CardActions sx={{ marginTop: "3rem" }}>
               <Button

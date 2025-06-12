@@ -14,14 +14,14 @@ import classes from "./Table.module.scss";
 import BackButton from "../../../shared/back-button/BackButton";
 
 const columns: GridColDef[] = [
-  { field: "lea_name", headerName: "Name", width: 300 },
+  { field: "lea_name", headerName: "Name", width: 250 },
   { field: "loc_city", headerName: "City", width: 200 },
   { field: "loc_state", headerName: "State", width: 200 },
   { field: "operational_status", headerName: "Operation Status", width: 200 },
   {
     field: "loc_zipcode",
     headerName: "ZipCode",
-    width: 200,
+    width: 100,
   },
   {
     field: "school_year",

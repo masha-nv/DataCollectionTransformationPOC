@@ -20,7 +20,7 @@ import { formatFileSize } from "../../utils/formatFileSize";
 const columns: GridColDef[] = [
   {
     field: "name",
-    width: 500,
+    width: 300,
     renderHeader: (params: GridColumnHeaderParams) => <strong>Name</strong>,
   },
   {
@@ -35,7 +35,7 @@ const columns: GridColDef[] = [
   },
   {
     field: "size",
-    width: 200,
+    width: 100,
     renderHeader: (params: GridColumnHeaderParams) => <strong>Size</strong>,
     renderCell: (params: GridRenderCellParams) => (
       <span>{formatFileSize(params.value)}</span>
