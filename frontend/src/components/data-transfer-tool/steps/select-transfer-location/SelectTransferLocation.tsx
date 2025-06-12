@@ -8,15 +8,10 @@ const options = [
     displayText: `U.S. Department of Education Office of Migrant Education – Migrant
           Student Information Exchange (MSIX) System`,
   },
-  {
-    value: " Random",
-    displayText: `Lorem ipsum dolor sit amet consectetur adipisicing elit. Kudantium error atque sunt expedita non cumque ullam.`,
-  },
 ];
 
 const SelectTransferLocation = () => {
   const { dispatch, state } = useContext(DataTransferContext);
-  console.log("state", state);
   return (
     <Box>
       <Select
