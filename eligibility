@@ -1,0 +1,125 @@
+import { DatePicker, Label, Radio, RadioOption } from '@elis/react-beacon';
+import { ChangeEvent, useState } from 'react';
+import { getTomorrowsDate, getValidityPeriodEndDateFormatted } from '../utils';
+import { I131RpRtdRdValidityPeriodType } from '../i131-rp-rtd-render-decision';
+
+export const VALIDITY_PERIOD_TYPE = {
+  CUSTOM: 0,
+  ONE_YEAR: 1,
+  TWO_YEARS: 2,
+};
+
+export interface I131RpRtdRdValidityPeriodProps {
+  isForReentryPermit: boolean;
+  onUpdate: (data: I131RpRtdRdValidityPeriodType) => void;
+  currentState: I131RpRtdRdValidityPeriodType
+}
+
+export const I131RpRtdRdValidityPeriodProps = ({ isForReentryPermit, onUpdate, currentState }: I131RpRtdRdValidityPeriodProps) => {
+  const [selectedOption, setSelectedOption] = useState(VALIDITY_PERIOD_TYPE.ONE_YEAR);
+  const onStartValidityChange = (startDate: string) => {
+    let endDate = currentState.endValidity;
+    if (currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.ONE_YEAR) {
+      endDate = getValidityPeriodEndDateFormatted(startDate, VALIDITY_PERIOD_TYPE.ONE_YEAR)
+    }
+    if (currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.TWO_YEARS) {
+      endDate = getValidityPeriodEndDateFormatted(startDate, VALIDITY_PERIOD_TYPE.TWO_YEARS)
+    }
+    onUpdate({...currentState, startValidity: startDate, endValidity: endDate})
+  }
+
+  const onValidityPeriodTypeChange = (event: ChangeEvent, value: string) => {
+    const validityPeriodToUse = Number(value);
+    setSelectedOption(validityPeriodToUse);
+    let endV = currentState.endValidity;
+    switch (validityPeriodToUse) {
+      case VALIDITY_PERIOD_TYPE.CUSTOM:
+        endV = '';
+        break;
+      case VALIDITY_PERIOD_TYPE.ONE_YEAR:
+        if (currentState.startValidity) {
+          endV = getValidityPeriodEndDateFormatted(currentState.startValidity, 1)
+        }
+        break;
+      case VALIDITY_PERIOD_TYPE.TWO_YEARS:
+        if (currentState.startValidity) {
+          endV = getValidityPeriodEndDateFormatted(currentState.startValidity, 2)
+        }
+        break;
+      default:
+        break;
+    }
+    onUpdate({...currentState, validityPeriodType: validityPeriodToUse, endValidity: endV})
+  };
+
+  const isCustomValidity = currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.CUSTOM;
+  return (
+    <div>
+      <div className="mb-4">
+        <Label required htmlFor="validity-period-start-date">
+          Travel Document Validity {selectedOption === VALIDITY_PERIOD_TYPE.CUSTOM ? 'From Date' : 'Start Date'}
+        </Label>
+        {/* input with date picker */}
+        <DatePicker
+          id={'validity-period-start-date'}
+          minDate={new Date()}
+          value={currentState.startValidity}
+          onChange={(e, v) => onStartValidityChange(v)}
+        />
+      </div>
+      <div className="mb-4">
+        <Label required htmlFor="validity-period-selection">
+          Travel Document Validity {selectedOption === VALIDITY_PERIOD_TYPE.CUSTOM ? 'To Date' : 'Period'}
+        </Label>
+        <Radio id={'validity-period-selection'} required name="travelDocumentValidityPeriodSelection">
+          <RadioOption
+            id={'one-year-validity'}
+            checked={currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.ONE_YEAR}
+            value={VALIDITY_PERIOD_TYPE.ONE_YEAR}
+            onChange={onValidityPeriodTypeChange}
+            disabled={!isForReentryPermit}
+          >
+            1 Year
+          </RadioOption>
+          {isForReentryPermit ? (
+            <>
+              <RadioOption
+                id={'two-years-validity'}
+                checked={currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.TWO_YEARS}
+                value={VALIDITY_PERIOD_TYPE.TWO_YEARS}
+                onChange={onValidityPeriodTypeChange}
+              >
+                2 Years
+              </RadioOption>
+              <RadioOption
+                id={'custom-validity'}
+                checked={currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.CUSTOM}
+                value={VALIDITY_PERIOD_TYPE.CUSTOM}
+                onChange={onValidityPeriodTypeChange}
+              >
+                Custom
+              </RadioOption>
+            </>
+          ) : (
+            <></>
+          )}
+        </Radio>
+        {isCustomValidity && (
+          <DatePicker
+            aria-label="travel document validity period (custom)"
+            id={'validity-period-end-date'}
+            value={currentState.endValidity}
+            onChange={(e, v) => {
+              onUpdate({...currentState, endValidity: v})
+            }}
+            minDate={getTomorrowsDate()}
+            maxDate={
+              currentState.startValidity ? new Date(getValidityPeriodEndDateFormatted(currentState.startValidity, 2)) : undefined
+            }
+          />
+        )}
+      </div>
+      <hr />
+    </div>
+  );
+};
