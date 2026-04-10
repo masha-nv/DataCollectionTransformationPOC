@@ -1,0 +1,323 @@
+import {
+  Alert,
+  AlertVariant,
+  Button,
+  ButtonType,
+  DataView,
+  DataViewLabelColumnWidth,
+  IDataViewFieldProps,
+  Label,
+  Modal,
+  Select,
+  SelectOption,
+  SelectSize,
+  SelectType,
+  TextArea,
+} from '@elis/react-beacon';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { CASE_FILING_TYPE_CODES, ICISCase, INTERNAL_APP } from '@uscis/elis/domain';
+import { useCISCase } from '@uscis/elis/state';
+import { useAxios } from '@uscis/elis/configuration';
+import './case-filing-type.scss';
+
+const ID = 'case-filing-type';
+
+type CaseFilingTypeProps = {
+  onCaseFilingTypeUpdate: (data: string) => void;
+};
+
+type FilingCategoryHistoryItem = {
+  from?: string;
+  to?: string;
+  user?: string;
+  date?: string;
+};
+
+const getAllowedFilingTypeCodes = (currentCode?: number): CASE_FILING_TYPE_CODES[] => {
+  switch (currentCode) {
+    case CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US:
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US,
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US,
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US:
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US,
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US,
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US:
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US,
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US,
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_LPR_US:
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US,
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US,
+      ];
+
+    default:
+      return [];
+  }
+};
+
+const getFilingTypeLabel = (code: CASE_FILING_TYPE_CODES): string => {
+  const key = Object.keys(CASE_FILING_TYPE_CODES).find(
+    (k) => CASE_FILING_TYPE_CODES[k as keyof typeof CASE_FILING_TYPE_CODES] === code
+  );
+
+  return key ? key.replace(/_/g, ' ') : String(code);
+};
+
+export function CaseFilingType({ onCaseFilingTypeUpdate }: CaseFilingTypeProps) {
+  const cisCase: ICISCase | null = useCISCase();
+
+  const caseId = cisCase?.caseId;
+
+  // Adjust this if your actual ICISCase shape uses a different numeric property name.
+  const currentFilingTypeCode = Number(
+    (cisCase?.caseFilingType as unknown as { code?: number })?.code
+  );
+
+  const currentFilingTypeDescription = cisCase?.caseFilingType?.description ?? '';
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [updatedCategory, setUpdatedCategory] = useState<CASE_FILING_TYPE_CODES | ''>('');
+  const [comments, setComments] = useState('');
+  const [bannerState, setBannerState] = useState<'success' | 'error' | null>(null);
+
+  const [
+    {
+      data: historyData,
+      error: historyError,
+      loading: historyLoading,
+    },
+    getFilingTypeChangeHistory,
+  ] = useAxios<FilingCategoryHistoryItem[]>(
+    {
+      url: caseId ? `${INTERNAL_APP}/caseSummary/${caseId}/filing-category-history` : '',
+      method: 'GET',
+    },
+    {
+      manual: !caseId,
+      useCache: false,
+    }
+  );
+
+  const [
+    {
+      error: saveError,
+      loading: saveLoading,
+    },
+    executeUpdateCaseFilingType,
+  ] = useAxios(
+    {
+      url: caseId ? `${INTERNAL_APP}/caseSummary/${caseId}/filing-category` : '',
+      method: 'POST',
+    },
+    { manual: true }
+  );
+
+  const allowedOptions = useMemo(
+    () => getAllowedFilingTypeCodes(Number.isNaN(currentFilingTypeCode) ? undefined : currentFilingTypeCode),
+    [currentFilingTypeCode]
+  );
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
+    setUpdatedCategory('');
+    setComments('');
+  }, [isModalOpen]);
+
+  function openDialog() {
+    setBannerState(null);
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+  }
+
+  function handleCategoryChange(value: string) {
+    if (!value) {
+      setUpdatedCategory('');
+      return;
+    }
+
+    setUpdatedCategory(Number(value) as CASE_FILING_TYPE_CODES);
+  }
+
+  function handleCommentsChange(value: string) {
+    setComments(value);
+  }
+
+  async function onConfirmChanges() {
+    if (!caseId || !updatedCategory || !comments.trim()) {
+      return;
+    }
+
+    try {
+      await executeUpdateCaseFilingType({
+        data: {
+          caseFilingTypeCode: String(updatedCategory),
+        },
+      });
+
+      await getFilingTypeChangeHistory();
+
+      setBannerState('success');
+      onCaseFilingTypeUpdate(String(updatedCategory));
+      closeModal();
+    } catch {
+      setBannerState('error');
+    }
+  }
+
+  const hasMountError = Boolean(historyError);
+  const hasHistory = Array.isArray(historyData) && historyData.length > 0;
+  const showComments = updatedCategory !== '';
+  const isConfirmDisabled = !updatedCategory || !comments.trim() || saveLoading;
+
+  const footerContent = (
+    <>
+      <Button id={`${ID}-cancel`} type={ButtonType.secondary} onClick={closeModal} disabled={saveLoading}>
+        Cancel
+      </Button>
+      <Button
+        id={`${ID}-confirm`}
+        type={ButtonType.primary}
+        disabled={isConfirmDisabled}
+        onClick={onConfirmChanges}
+      >
+        Confirm Changes
+      </Button>
+    </>
+  );
+
+  const fields: IDataViewFieldProps<string> = {
+    label: 'Filing Category',
+    field: 'currentFilingType',
+    details: hasHistory
+      ? (): ReactNode => (
+          <>
+            {historyData.map((item, index) => (
+              <div key={`${item.date ?? 'no-date'}-${item.user ?? 'no-user'}-${index}`}>
+                <span>
+                  {item.from ?? '-'} | {item.to ?? '-'} | {item.user ?? '-'} | {item.date ?? '-'}
+                </span>
+              </div>
+            ))}
+          </>
+        )
+      : undefined,
+    actions: hasHistory
+      ? (_value: unknown, _storyData: unknown, _index: number, toggle: () => void) => [
+          {
+            label: 'Show History',
+            labelSecondary: 'Hide History',
+            onClick: toggle,
+          },
+        ]
+      : undefined,
+  };
+
+  const data = {
+    currentFilingType: currentFilingTypeDescription,
+  } as unknown as string;
+
+  return (
+    <div className="case-filing-type-container">
+      {bannerState === 'success' && (
+        <Alert variant={AlertVariant.success}>Case filing type updated.</Alert>
+      )}
+
+      {bannerState === 'error' && (
+        <Alert variant={AlertVariant.error}>
+          Unable to update filing category. Please try again.
+        </Alert>
+      )}
+
+      {hasMountError && (
+        <Alert variant={AlertVariant.error}>
+          Unable to load filing category history.
+        </Alert>
+      )}
+
+      {saveError && bannerState !== 'error' && (
+        <Alert variant={AlertVariant.error}>
+          Unable to update filing category.
+        </Alert>
+      )}
+
+      {isModalOpen && (
+        <Modal
+          id={`${ID}-modal`}
+          title="I-131 Filing Categories"
+          footer={footerContent}
+          onRequestClose={closeModal}
+        >
+          <div className="mb-3">
+            <Select
+              id={`${ID}-select`}
+              name={`${ID}-select`}
+              label="Filing Category"
+              type={SelectType.primary}
+              size={SelectSize.fill}
+              required={true}
+              disabled={saveLoading || allowedOptions.length === 0}
+              value={String(updatedCategory)}
+              onChange={(evt) => handleCategoryChange(evt.target.value)}
+            >
+              <SelectOption value="">Select One</SelectOption>
+              {allowedOptions.map((option) => (
+                <SelectOption key={option} value={String(option)}>
+                  {getFilingTypeLabel(option)}
+                </SelectOption>
+              ))}
+            </Select>
+          </div>
+
+          {showComments && (
+            <div>
+              <Label htmlFor={`${ID}-comments`}>Comments</Label>
+              <TextArea
+                id={`${ID}-comments`}
+                required={true}
+                value={comments}
+                onChange={(evt) => handleCommentsChange(evt.target.value)}
+              />
+            </div>
+          )}
+        </Modal>
+      )}
+
+      <DataView
+        labelColumnWidth={DataViewLabelColumnWidth.medium}
+        id={ID}
+        isEditable={false}
+        title="Filing Category"
+        fields={[fields]}
+        toolbar={
+          <Button id={`${ID}-btn-edit`} type={ButtonType.tertiary} onClick={openDialog}>
+            Edit
+          </Button>
+        }
+        data={data}
+      />
+
+      {historyLoading && !hasMountError && (
+        <div className="mt-2">Loading filing category history...</div>
+      )}
+    </div>
+  );
+}
