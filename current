@@ -1,0 +1,227 @@
+import {
+  Alert,
+  AlertVariant,
+  Button,
+  ButtonType,
+  DataView,
+  DataViewLabelColumnWidth,
+  Icon,
+  IconType,
+  IDataViewFieldProps,
+  Label,
+  Modal,
+  Select,
+  SelectOption,
+  SelectSize,
+  SelectType,
+  TextArea,
+} from '@elis/react-beacon';
+import { ReactNode, useState } from 'react';
+import { CASE_FILING_TYPE_CODES, ICISCase, INTERNAL_APP } from '@uscis/elis/domain';
+import { useCISCase } from '@uscis/elis/state';
+import { useAxios } from '@uscis/elis/configuration';
+
+const ID = 'case-filing-type';
+
+type CaseFilingTypeProps = {
+  onCaseFilingTypeUpdate: (data: string) => void
+}
+
+export function CaseFilingType({onCaseFilingTypeUpdate}: CaseFilingTypeProps) {
+  const cisCase: ICISCase | null = useCISCase();
+  console.log('cisCasecisCase', cisCase);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [filingTypeChangeHistory, getFilingTypeChangeHistory] = useAxios(
+    { url: `${INTERNAL_APP}/mock-get-filing-type-changes-history`, method: 'GET' },
+    { manual: false, useCache: false }
+  );
+  const [{response, error: saveError, loading}, executeUpdateCaseFilingType] = useAxios(
+    {
+      url: `${INTERNAL_APP}/mock-save-case-filing-type`,
+      method: "POST",
+    },
+    { manual: true }
+  );
+
+  const [isSuccess, setIsSuccess] = useState<boolean | null>(null)
+
+
+
+
+  function closeModal() {
+    setIsModalOpen(false);
+  }
+
+  function openDialog() {
+    setIsModalOpen(true);
+  }
+
+   /**
+ * Maps the current filing code to its allowed transitions:
+ * 563 -> 566, 564, 565
+ * 566 -> 563, 564, 565
+ * 564 -> 565, 566, 563
+ * 565 -> 564, 566, 563
+ */
+const getAllowedFilingTypeCodes = (currentCode?: number): CASE_FILING_TYPE_CODES[] => {
+  switch (currentCode) {
+    case CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US: // 563
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US, // 565
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US: // 566
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US, // 565
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US: // 564
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US, // 565
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_LPR_US: // 565
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+      ];
+
+    default:
+      // TODO change to empty array
+      return [
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+      ];
+  }
+};
+
+// TODO to be replaced with filingTypeChangeHistory
+  const mockHistory = [
+    { from: "I131RTD Non LPR Outside US", to: "I131RTD Non LPR US", user: 'User A', date: new Date().toDateString() },
+    { from: "I131RTD Non LPR Outside US", to: "I131RTD Non LPR Outside US", user: 'User B', date: new Date('2025-12-22').toDateString() },
+  ]
+
+  const getFilingTypeLabel = (code: number): string => {
+  // Find the key in the enum that matches the numeric code
+  const key = Object.keys(CASE_FILING_TYPE_CODES).find(
+    (k) => CASE_FILING_TYPE_CODES[k as keyof typeof CASE_FILING_TYPE_CODES] === code
+  );
+
+  // If found, replace underscores with spaces; otherwise return the code as a string
+  return key ? key.replace(/_/g, ' ') : code.toString();
+};
+
+
+  function onConfirmChanges() {
+    // TODO uncomment when endpoint is finalized
+    // executeUpdateCaseFilingType().then(
+    // ).finally(() => closeModal())
+
+    // mock implementation
+    const rand = Math.random()
+    new Promise((res, rej) => {
+      if (rand > 0.2) {
+        res("success")
+        setIsSuccess(true)
+        onCaseFilingTypeUpdate("test")
+        closeModal()
+      } else {
+        rej("Failed")
+        setIsSuccess(false)
+        closeModal()
+      }
+    })
+
+  }
+
+  const footerContent = (
+    <>
+      <Button id="cancel" type={ButtonType.secondary} onClick={closeModal}>
+        Cancel
+      </Button>
+      <Button id="confirm" type={ButtonType.primary} onClick={onConfirmChanges}>
+        Confirm Changes
+      </Button>
+    </>
+  );
+
+//
+
+  const fields: IDataViewFieldProps<string> = {
+    label: 'Current Filing Type',
+    field: 'currentFilingType',
+    details: (value: unknown, storyData: unknown, index: number): ReactNode => {
+      return (
+          <>
+            {mockHistory.map(el => <div>
+              <span>{el.from} | {el.to} | {el.user} | {el.date} </span>
+            </div>)}
+          </>
+      );
+    },
+    actions: (value: unknown, storyData: unknown, index: number, toggle: () => void) => {
+        return [
+          {
+            label: 'Show History',
+            labelSecondary: 'Hide History',
+            onClick: toggle,
+          },
+        ];
+      },
+  };
+
+  const data = { currentFilingType: cisCase?.caseFilingType.description ?? '' } as unknown as string;
+
+  const toolbar = (
+    <Button id={`${ID}-btn-edit`} type={ButtonType.tertiary} onClick={openDialog}>
+      <Icon type={IconType.pencilAlt} />
+      Edit
+    </Button>
+  );
+  return (
+    <div className="case-filing-type-container">
+      {isSuccess ? <Alert variant={AlertVariant.success}>Case filing type updated!</Alert> :
+      isSuccess === false ? <Alert variant={AlertVariant.error}>Something went wrong.</Alert> : <></>}
+      {isModalOpen && (
+        <Modal id="1" title="Modal" footer={footerContent} onRequestClose={closeModal}>
+          <div className="mb-3">
+            <Select
+              id="case-filing-type"
+              name="case-filing-type"
+              label="Select Case Filing Type"
+              type={SelectType.primary}
+              size={SelectSize.fill}
+              disabled={false}
+              required={true}
+            >
+              {getAllowedFilingTypeCodes().map(opt => <SelectOption key={opt} value={opt}>{getFilingTypeLabel(opt)}</SelectOption>
+              )}
+
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="comments">Comments</Label>
+            <TextArea id="comments" />
+          </div>
+        </Modal>
+      )}
+      <DataView
+        labelColumnWidth={DataViewLabelColumnWidth.medium}
+        id={`${ID}`}
+        isEditable={false}
+        title={'Case Filing Type'}
+        fields={[fields]}
+        toolbar={toolbar}
+        data={data}
+      />
+    </div>
+  );
+}
