@@ -1,0 +1,246 @@
+import {
+  Alert,
+  AlertVariant,
+  Button,
+  ButtonType,
+  DataView,
+  DataViewLabelColumnWidth,
+  Icon,
+  IconType,
+  IDataViewFieldProps,
+  Label,
+  Modal,
+  Select,
+  SelectOption,
+  SelectSize,
+  SelectType,
+  TextArea,
+} from '@elis/react-beacon';
+import {  ReactNode, useState } from 'react';
+import {  CASE_FILING_TYPE_CODES, ICISCase, INTERNAL_APP } from '@uscis/elis/domain';
+import { useCISCase } from '@uscis/elis/state';
+import { useAxios } from '@uscis/elis/configuration';
+import './case-filing-type.scss';
+
+const ID = 'case-filing-type';
+
+type CaseFilingTypeProps = {
+  onCaseFilingTypeUpdate: (data: string) => void
+}
+
+export function CaseFilingType({onCaseFilingTypeUpdate}: CaseFilingTypeProps) {
+  const cisCase: ICISCase | null = useCISCase();
+  console.log('cisCasecisCase', cisCase);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [filingTypeChangeHistory, getFilingTypeChangeHistory] = useAxios(
+    { url: `${INTERNAL_APP}/caseSummary/${cisCase?.caseId}/filing-category-history`, method: 'GET' },
+    { manual: false, useCache: false }
+  );
+  const [{response, error: saveError, loading}, executeUpdateCaseFilingType] = useAxios(
+    {
+      url: `${INTERNAL_APP}/caseSummary/${cisCase?.caseId}/filing-category`,
+      method: "POST",
+    },
+    { manual: true }
+  );
+
+  const [updatedCategory, setUpdatedCategory] = useState<CASE_FILING_TYPE_CODES | null>(null);
+  const [comments, setComments] = useState<string>('');
+
+  const [isSuccess, setIsSuccess] = useState<boolean | null>(null)
+
+  function closeModal() {
+    setComments('');
+    setUpdatedCategory(null);
+    setIsModalOpen(false);
+  }
+
+  function openDialog() {
+    setIsModalOpen(true);
+  }
+
+   /**
+ * Maps the current filing code to its allowed transitions:
+ * 563 -> 566, 564, 565
+ * 566 -> 563, 564, 565
+ * 564 -> 565, 566, 563
+ * 565 -> 564, 566, 563
+ */
+const getAllowedFilingTypeCodes = (currentCode?: number): Array<CASE_FILING_TYPE_CODES | null> => {
+  switch (currentCode) {
+    case CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US: // 563
+      return [
+        null,
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US, // 565
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US: // 566
+      return [
+        null,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US, // 565
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US: // 564
+      return [
+        null,
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_US, // 565
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+      ];
+
+    case CASE_FILING_TYPE_CODES.I131RTD_LPR_US: // 565
+      return [
+        null,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+      ];
+
+    default:
+      // TODO change to empty array [mdev]
+      return [
+        null,
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US, // 564
+        CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US, // 566
+        CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US, // 563
+      ];
+  }
+};
+
+// TODO to be replaced with filingTypeChangeHistory
+  const mockHistory = [
+    // { from: "I131RTD Non LPR Outside US", to: "I131RTD Non LPR US", user: 'User A', date: new Date().toDateString() },
+    // { from: "I131RTD Non LPR Outside US", to: "I131RTD Non LPR Outside US", user: 'User B', date: new Date('2025-12-22').toDateString() },
+  ] as unknown [];
+
+  const getFilingTypeLabel = (code: number | null): string => {
+    if (code === null) {
+      return 'Select One'
+    }
+  // Find the key in the enum that matches the numeric code
+  const key = Object.keys(CASE_FILING_TYPE_CODES).find(
+    (k) => CASE_FILING_TYPE_CODES[k as keyof typeof CASE_FILING_TYPE_CODES] === code
+  );
+
+  // If found, replace underscores with spaces; otherwise return the code as a string
+  return key ? key.replace(/_/g, ' ') : code.toString();
+};
+
+
+  function onConfirmChanges() {
+    executeUpdateCaseFilingType().then(() => {
+      setIsSuccess(true)
+      // if needed, send any data to the angular js controller
+      onCaseFilingTypeUpdate("Success ")
+    }
+    ).catch(e => {
+      setIsSuccess(false)
+    })
+    .finally(() => closeModal())
+  }
+
+  const footerContent = (
+    <>
+      <Button id="cancel" type={ButtonType.secondary} onClick={closeModal}>
+        Cancel
+      </Button>
+      <Button id="confirm" type={ButtonType.primary}
+      disabled={!updatedCategory || !comments} onClick={onConfirmChanges}>
+        Confirm Changes
+      </Button>
+    </>
+  );
+  function handleCategoryChange(cat: string) {
+    setUpdatedCategory(cat as unknown as CASE_FILING_TYPE_CODES);
+  }
+
+  function handleCommentsChange(comments: string) {
+    setComments(comments.trim())
+  }
+
+//
+  const fields: IDataViewFieldProps<string> = {
+    label: <>
+      <h4>Filing Category</h4>
+      <Button id={`${ID}-btn-edit`} type={ButtonType.tertiary} onClick={openDialog}>
+        Edit
+      </Button>
+      <p>{cisCase?.caseFilingType.description}</p>
+    </>,
+    field: filingTypeChangeHistory?.data?.length ? 'currentFilingType' : undefined,
+    details: filingTypeChangeHistory?.data?.length ?  (value: unknown, storyData: unknown, index: number): ReactNode => {
+      return (
+          <>
+            {(filingTypeChangeHistory as unknown as {from: string, to: string, user: string, date: string}[]).map((el) => <div>
+              <span>{el.from} | {el.to} | {el.user} | {el.date} </span>
+            </div>)}
+          </>
+      );
+    } : undefined,
+    actions: filingTypeChangeHistory?.data?.length ? (value: unknown, storyData: unknown, index: number, toggle: () => void) => {
+        return [
+          {
+            label: 'Show History',
+            labelSecondary: 'Hide History',
+            onClick: toggle,
+          },
+        ];
+      } : undefined,
+  };
+
+  const data = { currentFilingType: cisCase?.caseFilingType.description ?? '' } as unknown as string;
+
+  const toolbar = (
+    <Button id={`${ID}-btn-edit`} type={ButtonType.tertiary} onClick={openDialog}>
+      <Icon type={IconType.pencilAlt} />
+      Edit
+    </Button>
+  );
+  return (
+    <div className="case-filing-type-container">
+      {isSuccess ? <Alert variant={AlertVariant.success}>Case filing type updated!</Alert> :
+      isSuccess === false ? <Alert variant={AlertVariant.error}>Something went wrong.</Alert> : <></>}
+      {isModalOpen && (
+        <Modal id={`${ID}-modal`} title="I-131 Filing Categories" footer={footerContent} onRequestClose={closeModal}>
+          <div className="mb-3">
+            <Select
+              id="case-filing-type"
+              name="case-filing-type"
+              label="Filing Category"
+              type={SelectType.primary}
+              size={SelectSize.fill}
+              disabled={false}
+              required={true}
+
+              onChange={evt => handleCategoryChange(evt.target.value)}
+            >
+              {getAllowedFilingTypeCodes().map(opt => <SelectOption key={opt} value={opt}>{getFilingTypeLabel(opt)}</SelectOption>
+              )}
+            </Select>
+          </div>
+          {updatedCategory && <div>
+            <Label htmlFor={`${ID}-comments`}>Comments</Label>
+            <TextArea
+            id={`${ID}-comments`}
+            required={true}
+            value={comments}
+            onChange={evt =>handleCommentsChange(evt.target.value)} />
+          </div>}
+        </Modal>
+      )}
+      <DataView
+        labelColumnWidth={DataViewLabelColumnWidth.medium}
+        id={`${ID}`}
+        isEditable={false}
+        title={filingTypeChangeHistory?.data?.length ?  'Filing Category' : undefined}
+        fields={[fields]}
+        toolbar={filingTypeChangeHistory?.data?.length ? toolbar : undefined}
+        data={data}
+      />
+    </div>
+  );
+}
