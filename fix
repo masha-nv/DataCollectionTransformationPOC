@@ -1,0 +1,249 @@
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@uscis/elis/testing/library';
+import { useAxios } from '@uscis/elis/configuration';
+import { useCISCase } from '@uscis/elis/state';
+import { CASE_FILING_TYPE_CODES, ICISCase } from '@uscis/elis/domain';
+import { UseAxiosResult } from 'axios-hooks';
+import { CaseFilingType } from './case-filing-type';
+
+jest.mock('@uscis/elis/configuration', () => {
+  const actual = jest.requireActual('@uscis/elis/configuration');
+  return {
+    ...actual,
+    useAxios: jest.fn(),
+  };
+});
+
+jest.mock('@uscis/elis/state', () => {
+  const actual = jest.requireActual('@uscis/elis/state');
+  return {
+    ...actual,
+    useCISCase: jest.fn(),
+  };
+});
+
+const useAxiosMock = useAxios as jest.MockedFunction<typeof useAxios>;
+const useCISCaseMock = useCISCase as jest.MockedFunction<typeof useCISCase>;
+
+type FilingCategoryHistoryItem = {
+  from?: string;
+  to?: string;
+  user?: string;
+  date?: string;
+};
+
+describe('CaseFilingType', () => {
+  const onCaseFilingTypeUpdate = jest.fn();
+  const getFilingTypeChangeHistoryMock = jest.fn().mockResolvedValue([]);
+  const executeUpdateCaseFilingTypeMock = jest.fn().mockResolvedValue([]);
+  const saveCommentsMock = jest.fn().mockResolvedValue([]);
+  const reloadMock = jest.fn();
+
+  const mockCase: ICISCase = {
+    caseId: 1234567,
+    caseFilingTypeCode: CASE_FILING_TYPE_CODES.I131RTD_LPR_US,
+    caseFilingType: {
+      description: 'Refugee Travel Document - LPR In US',
+    },
+  } as ICISCase;
+
+  const setup = ({
+    cisCase = mockCase,
+    historyResponse,
+    updateResponse,
+    commentsResponse,
+  }: {
+    cisCase?: ICISCase | null;
+    historyResponse?: Partial<UseAxiosResult<FilingCategoryHistoryItem[], unknown, unknown>[0]>;
+    updateResponse?: Partial<UseAxiosResult<unknown, unknown, unknown>[0]>;
+    commentsResponse?: Partial<UseAxiosResult<unknown, unknown, unknown>[0]>;
+  } = {}) => {
+    useCISCaseMock.mockReturnValue(cisCase);
+
+    const historyResultMock: UseAxiosResult<FilingCategoryHistoryItem[], unknown, unknown> = [
+      {
+        loading: false,
+        error: null,
+        data: [],
+        ...historyResponse,
+      },
+      getFilingTypeChangeHistoryMock,
+      jest.fn(),
+    ];
+
+    const updateResultMock: UseAxiosResult<unknown, unknown, unknown> = [
+      {
+        loading: false,
+        error: null,
+        data: undefined,
+        ...updateResponse,
+      },
+      executeUpdateCaseFilingTypeMock,
+      jest.fn(),
+    ];
+
+    const commentsResultMock: UseAxiosResult<unknown, unknown, unknown> = [
+      {
+        loading: false,
+        error: null,
+        data: undefined,
+        ...commentsResponse,
+      },
+      saveCommentsMock,
+      jest.fn(),
+    ];
+
+    useAxiosMock
+      .mockReturnValueOnce(historyResultMock)
+      .mockReturnValueOnce(updateResultMock)
+      .mockReturnValueOnce(commentsResultMock);
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        reload: reloadMock,
+      },
+    });
+
+    return render(<CaseFilingType onCaseFilingTypeUpdate={onCaseFilingTypeUpdate} />);
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders current filing category', () => {
+    setup();
+
+    expect(screen.getByText('Filing Category')).toBeTruthy();
+    expect(screen.getByText('Refugee Travel Document - LPR In US')).toBeTruthy();
+    expect(screen.getByText('Edit')).toBeTruthy();
+  });
+
+  it('renders mount error when history request fails', () => {
+    setup({
+      historyResponse: {
+        error: {
+          response: {
+            status: 500,
+            statusText: 'Unable to load filing category history.',
+          },
+        },
+      },
+    });
+
+    expect(screen.getByText('Unable to load filing category history.')).toBeTruthy();
+  });
+
+  it('opens modal when Edit is clicked', () => {
+    setup();
+
+    fireEvent.click(screen.getByText('Edit'));
+
+    expect(
+      screen.getByText('Update I-131 Refugee Travel Document Filing Category')
+    ).toBeTruthy();
+  });
+
+  it('shows comments after selecting a category', () => {
+    setup();
+
+    fireEvent.click(screen.getByText('Edit'));
+
+    expect(screen.queryByText('Comments')).toBeFalsy();
+
+    fireEvent.change(screen.getByLabelText('Filing Category'), {
+      target: {
+        value: String(CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US),
+      },
+    });
+
+    expect(screen.getByText('Comments')).toBeTruthy();
+  });
+
+  it('disables confirm until category and comments are entered', () => {
+    setup();
+
+    fireEvent.click(screen.getByText('Edit'));
+
+    const confirmButton = screen.getByText('Confirm Changes') as HTMLButtonElement;
+    expect(confirmButton.disabled).toBe(true);
+
+    fireEvent.change(screen.getByLabelText('Filing Category'), {
+      target: {
+        value: String(CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US),
+      },
+    });
+
+    expect(confirmButton.disabled).toBe(true);
+
+    fireEvent.change(screen.getByLabelText('Comments'), {
+      target: { value: 'test comment' },
+    });
+
+    expect(confirmButton.disabled).toBe(false);
+  });
+
+  it('saves filing type, saves comments, refreshes history, triggers callback, and hard refreshes', async () => {
+    setup();
+
+    fireEvent.click(screen.getByText('Edit'));
+
+    fireEvent.change(screen.getByLabelText('Filing Category'), {
+      target: {
+        value: String(CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US),
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText('Comments'), {
+      target: { value: 'Updated filing type comment' },
+    });
+
+    fireEvent.click(screen.getByText('Confirm Changes'));
+
+    await waitFor(() => {
+      expect(executeUpdateCaseFilingTypeMock).toHaveBeenCalledWith({
+        data: {
+          caseFilingTypeCode: String(CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US),
+        },
+      });
+    });
+
+    expect(saveCommentsMock).toHaveBeenCalledWith({
+      data: {
+        caseNoteText: 'Updated filing type comment',
+        caseIdentifier: 1234567,
+      },
+    });
+
+    expect(getFilingTypeChangeHistoryMock).toHaveBeenCalled();
+    expect(onCaseFilingTypeUpdate).toHaveBeenCalledWith(
+      String(CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US)
+    );
+    expect(reloadMock).toHaveBeenCalled();
+  });
+
+  it('shows error banner when filing type update fails', async () => {
+    executeUpdateCaseFilingTypeMock.mockRejectedValueOnce(new Error('error'));
+    setup();
+
+    fireEvent.click(screen.getByText('Edit'));
+
+    fireEvent.change(screen.getByLabelText('Filing Category'), {
+      target: {
+        value: String(CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_US),
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText('Comments'), {
+      target: { value: 'Updated filing type comment' },
+    });
+
+    fireEvent.click(screen.getByText('Confirm Changes'));
+
+    expect(
+      await screen.findByText('Unable to update filing category. Please try again.')
+    ).toBeTruthy();
+  });
+});
