@@ -1,0 +1,62 @@
+import { GET_CASE_TASK_ENVIRONMENT_CONFIG, server } from '@uscis/elis/testing';
+import { render, screen } from '@uscis/elis/testing/library';
+import {
+  GET_CASE_ERRORS,
+  GET_CASE_ERRORS_EMPTY,
+  GET_CASE_ERRORS_ERROR,
+  GET_CASE_ERRORS_MISSING_ELP_MESSAGE_ID,
+  GET_CASE_ERRORS_NULL,
+  GET_CASE_ERRORS_WITH_ONLY_WORKFLOW_DLQ,
+  MOCK_CASE_ERRORS,
+} from './case-errors.mocks';
+import { CaseErrors } from './case-errors';
+
+describe('CaseErrors component', () => {
+  let mockedScopeDeregister = jest.fn();
+  beforeEach(() => {
+    mockedScopeDeregister = jest.fn();
+    server.use(GET_CASE_TASK_ENVIRONMENT_CONFIG);
+  });
+
+  test('renders CaseErrors correctly with case errors', async () => {
+    server.use(GET_CASE_ERRORS);
+    const { baseElement } = render(<CaseErrors caseId={1234567} />);
+    expect(await screen.findByText('dffb2e87-abe6-4b1c-96d5-2761749f320e')).toBeTruthy();
+    const elpMessageIdCell = await screen.findByElementId('case-errors-table-cell-elp-message-id-0');
+    expect(MOCK_CASE_ERRORS[0].elpMessageId).toBeTruthy();
+    expect(elpMessageIdCell.textContent).toEqual(MOCK_CASE_ERRORS[0].elpMessageId);
+    expect(baseElement).toMatchSnapshot();
+  });
+
+  test('renders empty table when case errors is empty array', async () => {
+    server.use(GET_CASE_ERRORS_EMPTY);
+    render(<CaseErrors caseId={1234567} />);
+    expect(await screen.findByText('There are no records to display')).toBeTruthy();
+  });
+
+  test('renders empty table when case errors is null', async () => {
+    server.use(GET_CASE_ERRORS_NULL);
+    render(<CaseErrors caseId={1234567} />);
+    expect(await screen.findByText('There are no records to display')).toBeTruthy();
+  });
+
+  test('renders empty table when case errors are all in a workflowTask DLQ because those errors get filtered out', async () => {
+    server.use(GET_CASE_ERRORS_WITH_ONLY_WORKFLOW_DLQ);
+    render(<CaseErrors caseId={1234567} />);
+    expect(await screen.findByText('There are no records to display')).toBeTruthy();
+  });
+
+  test('renders error on error response', async () => {
+    server.use(GET_CASE_ERRORS_ERROR);
+    render(<CaseErrors caseId={1234567} />);
+    expect(await screen.findByText('Request failed with status code 500')).toBeTruthy();
+  });
+
+  test('renders entry with empty cell for ELP Message ID if it is unavailable', async () => {
+    server.use(GET_CASE_ERRORS_MISSING_ELP_MESSAGE_ID);
+    render(<CaseErrors caseId={1234567} />);
+    expect(await screen.findByText('dffb2e87-abe6-4b1c-96d5-2761749f320e')).toBeTruthy();
+    const elpMessageIdCell = await screen.findByElementId('case-errors-table-cell-elp-message-id-0');
+    expect(elpMessageIdCell.textContent).toEqual('');
+  });
+});
