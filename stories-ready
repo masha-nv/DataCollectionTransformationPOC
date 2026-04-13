@@ -1,0 +1,117 @@
+import { Meta, Story } from '@storybook/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import { useEffect } from 'react';
+import { ElisContainer } from '@uscis/elis/storybook';
+import { CISCASE_FROM_STORE, MOCK_USER_SECURITY } from '@uscis/elis/testing';
+import {
+  cisCaseReducer,
+  initSecurity,
+  setCISCase,
+  userSecurityReducer,
+} from '@uscis/elis/state';
+import { CASE_FILING_TYPE_CODES, ICISCase, UserPermissions } from '@uscis/elis/domain';
+import { DefaultBodyType, MockedRequest, RestHandler } from 'msw';
+import { CaseFilingType } from './case-filing-type';
+import {
+  GET_FILING_CATEGORY_HISTORY,
+  GET_FILING_CATEGORY_HISTORY_EMPTY,
+  UPDATE_FILING_CATEGORY_SUCCESS,
+  UPDATE_FILING_CATEGORY_ERROR,
+  SAVE_CASE_NOTE_SUCCESS,
+  SAVE_CASE_NOTE_ERROR,
+} from './__test-data__/case-filing-type.mocks';
+
+type CaseFilingTypeProps = React.ComponentProps<typeof CaseFilingType>;
+
+const STORE = configureStore({
+  reducer: {
+    cisCase: cisCaseReducer.reducer,
+    userSecurity: userSecurityReducer.reducer,
+  },
+});
+
+const defaultCase: ICISCase = {
+  ...CISCASE_FROM_STORE,
+  caseId: 1234567,
+  caseFilingTypeCode: CASE_FILING_TYPE_CODES.I131RTD_LPR_US,
+  caseFilingType: {
+    description: 'Refugee Travel Document - LPR In US',
+  },
+} as ICISCase;
+
+export default {
+  component: CaseFilingType,
+  title: 'Reusable Components/Case Filing Type/Case Filing Type',
+} as Meta;
+
+const generateStory = (
+  mswHandlers: RestHandler<MockedRequest<DefaultBodyType>>[],
+  cisCase: ICISCase | null,
+  props?: Partial<CaseFilingTypeProps>,
+  userPermissions?: UserPermissions
+) => {
+  const Component: Story<CaseFilingTypeProps> = (args: CaseFilingTypeProps) => {
+    useEffect(() => {
+      STORE.dispatch(setCISCase(cisCase));
+      STORE.dispatch(
+        initSecurity(
+          MOCK_USER_SECURITY.details,
+          MOCK_USER_SECURITY.supervisors,
+          MOCK_USER_SECURITY.caseLifeCyclePermissions,
+          MOCK_USER_SECURITY.skills,
+          {
+            ...MOCK_USER_SECURITY.permissions,
+            userPermissions: userPermissions ?? {},
+          }
+        )
+      );
+    }, []);
+
+    return (
+      <Provider store={STORE}>
+        <ElisContainer>
+          <CaseFilingType {...args} />
+        </ElisContainer>
+      </Provider>
+    );
+  };
+
+  Component.args = {
+    onCaseFilingTypeUpdate: () => undefined,
+    ...props,
+  };
+
+  Component.parameters = {
+    msw: {
+      handlers: mswHandlers,
+    },
+  };
+
+  return Component;
+};
+
+export const CaseFilingTypePrimary = generateStory(
+  [GET_FILING_CATEGORY_HISTORY, UPDATE_FILING_CATEGORY_SUCCESS, SAVE_CASE_NOTE_SUCCESS],
+  defaultCase
+);
+
+export const CaseFilingTypeNoHistory = generateStory(
+  [GET_FILING_CATEGORY_HISTORY_EMPTY, UPDATE_FILING_CATEGORY_SUCCESS, SAVE_CASE_NOTE_SUCCESS],
+  defaultCase
+);
+
+export const CaseFilingTypeUpdateError = generateStory(
+  [GET_FILING_CATEGORY_HISTORY, UPDATE_FILING_CATEGORY_ERROR, SAVE_CASE_NOTE_SUCCESS],
+  defaultCase
+);
+
+export const CaseFilingTypeSaveCommentsError = generateStory(
+  [GET_FILING_CATEGORY_HISTORY, UPDATE_FILING_CATEGORY_SUCCESS, SAVE_CASE_NOTE_ERROR],
+  defaultCase
+);
+
+export const CaseFilingTypeNullCase = generateStory(
+  [GET_FILING_CATEGORY_HISTORY_EMPTY],
+  null
+);
