@@ -1,0 +1,357 @@
+import { render, waitFor, screen } from '@uscis/elis/testing/library';
+import userEvent from '@testing-library/user-event';
+import { useAxios } from '@uscis/elis/configuration';
+import { IAlienNumberDataWrapper, ICISCase, INTERNAL_APP, UserPermissions } from '@uscis/elis/domain';
+import { cisCaseReducer, userSecurityReducer, setCISCase, initSecurity } from '@uscis/elis/state';
+import { CISCASE_FROM_STORE, MOCK_USER_SECURITY } from '@uscis/elis/testing';
+import { UseAxiosResult } from 'axios-hooks';
+import { AlienNumberDataWrapperResponse } from '../alien-number-modal/alien-number-modal';
+import AlienNumberModal, { IAlienNumberModalProps } from '../alien-number-modal/alien-number-modal';
+import AlienNumberCaseSummary, {
+  IAlienNumberCaseSummaryProps,
+} from '../alien-number-case-summary/alien-number-case-summary';
+import {
+  MOCK_ALIEN_NUMBER_DATA_WRAPPER_WITH_HISTORY,
+  MOCK_NO_PRIMARY_ALIEN_NUMBER_DATA_WRAPPER,
+  MOCK_NO_DATA_ALIEN_NUMBER_DATA_WRAPPER,
+} from '../alien-number-data-table/alien-number-data-table.hooks.mocks';
+import { ElisContainer } from '@uscis/elis/storybook';
+import { configureStore } from '@reduxjs/toolkit';
+import { Provider } from 'react-redux';
+
+// Types
+type SetupConfig = {
+  cisCase: ICISCase | null;
+  props?: Partial<IAlienNumberCaseSummaryProps>;
+  alienNumberHistoryRequestMock?: jest.Mock;
+  alienNumberHistoryResponse?: AlienNumberDataWrapperResponse;
+};
+
+// Mocks
+jest.mock('@uscis/elis/configuration', () => {
+  const actual = jest.requireActual('@uscis/elis/configuration');
+  return {
+    ...actual,
+    useAxios: jest.fn(),
+  };
+});
+
+jest.mock('../alien-number-modal/alien-number-modal');
+const AlienNumberModalMock = AlienNumberModal as jest.Mock<JSX.Element, [IAlienNumberModalProps]>;
+
+const useAxiosMock = useAxios as jest.MockedFunction<typeof useAxios>;
+
+const ACTIVE_ALIEN_NUMBER_ID = 5034196;
+const INACTIVE_ALIEN_NUMBER_ID = 5034185;
+
+const MOCK_STORE = configureStore({
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      immutableCheck: false,
+      serializableCheck: false,
+    }),
+  reducer: {
+    cisCase: cisCaseReducer.reducer,
+    userSecurity: userSecurityReducer.reducer,
+  },
+});
+
+const alienNumberModalId = 'AlienNumberModalMock';
+
+const setup = ({ cisCase, alienNumberHistoryRequestMock, alienNumberHistoryResponse }: SetupConfig) => {
+  const ALL_USER_PERMISSIONS: UserPermissions = {
+    alienNumber: ['edit'],
+  };
+  const alienNumbrHistoryResultMock: UseAxiosResult<IAlienNumberDataWrapper, unknown, unknown> = [
+    alienNumberHistoryResponse ?? {
+      loading: false,
+      error: null,
+      data: MOCK_ALIEN_NUMBER_DATA_WRAPPER_WITH_HISTORY,
+    },
+    alienNumberHistoryRequestMock ?? jest.fn().mockImplementation(() => Promise.resolve([])),
+    jest.fn(),
+  ];
+
+  MOCK_STORE.dispatch(setCISCase(cisCase));
+  MOCK_STORE.dispatch(
+    initSecurity(
+      MOCK_USER_SECURITY.details,
+      MOCK_USER_SECURITY.supervisors,
+      MOCK_USER_SECURITY.caseLifeCyclePermissions,
+      [],
+      { ...MOCK_USER_SECURITY.permissions, userPermissions: ALL_USER_PERMISSIONS }
+    )
+  );
+  useAxiosMock.mockReturnValue(alienNumbrHistoryResultMock);
+  AlienNumberModalMock.mockReturnValue(<div id={alienNumberModalId} />);
+
+  const { caseId } = CISCASE_FROM_STORE;
+  return {
+    ...render(
+      <Provider store={MOCK_STORE}>
+        <ElisContainer>
+          <AlienNumberCaseSummary
+            id={'alien-number-case-summary-test'}
+            caseId={caseId}
+            personId={5643785}
+            headerText="Alien Number(s)"
+          />
+        </ElisContainer>
+      </Provider>
+    ),
+    alienNumbrHistoryResultMock,
+  };
+};
+
+describe('AlienNumberCaseSummary', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  const alienNumberModalId = 'AlienNumberModalMock';
+  const noAlienNumbersMessage = 'No alien number data provided';
+  const field = {
+    progressIndicator: () => screen.getByText('Loading...'),
+    progressIndicatorFalsy: () => screen.queryByText('Loading...'),
+    addAlienNumberButton: () => screen.getByElementId(`add-alien-number-button`),
+    alienNumberActionButton: (alienNumberId: number, action: string) =>
+      screen.getByElementId(`${alienNumberId}-${action}-button`),
+    errors: async () => screen.findAllByQuerySelector('.alert-error'),
+    error: async (message: string) => screen.findByText(message),
+    alienNumberModal: () => screen.getByElementId(alienNumberModalId),
+    alienNumberModalFalsy: () => screen.queryByElementId(alienNumberModalId),
+    confirmationModal: (alienNumberId: number, action: string) =>
+      screen.queryByElementId(`confirmation-modal-${alienNumberId}-${action}`),
+    confirmationModalConfirmButton: (alienNumberId: number, action: string) =>
+      screen.getByElementId(`${alienNumberId}-${action}-confirm`),
+    confirmationModalCancelButton: (alienNumberId: number, action: string) =>
+      screen.getByElementId(`${alienNumberId}-${action}-cancel`),
+    noAlienNumbersMessage: () => screen.getByText(noAlienNumbersMessage),
+  };
+  const page = {
+    clickAlienNumberModalSave: async () =>
+      await waitFor(async () => AlienNumberModalMock.mock.calls[0][0].onSave()),
+    clickAlienNumberModalClose: async () =>
+      await waitFor(async () => AlienNumberModalMock.mock.calls[0][0].onClose()),
+    clickAddAlienNumberModalButton: () => waitFor(() => userEvent.click(field.addAlienNumberButton())),
+    clickAlienNumberActionButton: (alienNumberId: number, action: string) =>
+      waitFor(() => userEvent.click(field.alienNumberActionButton(alienNumberId, action))),
+    clickConfirmButton: async (alienNumberId: number, action: string) =>
+      await waitFor(async () => userEvent.click(field.confirmationModalConfirmButton(alienNumberId, action))),
+    clickCancelButton: (alienNumberId: number, action: string) =>
+      waitFor(() => userEvent.click(field.confirmationModalCancelButton(alienNumberId, action))),
+  };
+
+  it('should render successfully', async () => {
+    const { baseElement } = setup({ cisCase: CISCASE_FROM_STORE });
+
+    expect(baseElement).toBeTruthy();
+    await waitFor(() => {
+      expect(field.progressIndicatorFalsy()).toBeFalsy();
+    });
+    expect(baseElement).toMatchSnapshot();
+  });
+
+  it('opens alien number modal on add button click', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    expect(field.alienNumberModalFalsy()).toBeFalsy();
+
+    await page.clickAddAlienNumberModalButton();
+
+    expect(await field.alienNumberModal()).toBeTruthy();
+  });
+
+  it('opens alien number modal on add button click, but with no primary alien numbers', async () => {
+    setup({
+      alienNumberHistoryResponse: {
+        loading: false,
+        error: null,
+        data: MOCK_NO_PRIMARY_ALIEN_NUMBER_DATA_WRAPPER,
+      },
+      cisCase: CISCASE_FROM_STORE,
+    });
+
+    expect(field.alienNumberModalFalsy()).toBeFalsy();
+
+    await page.clickAddAlienNumberModalButton();
+
+    expect(await field.alienNumberModal()).toBeTruthy();
+  });
+
+  it('should render with no existing alien numbers', async () => {
+    setup({
+      alienNumberHistoryResponse: {
+        loading: false,
+        error: null,
+        data: MOCK_NO_DATA_ALIEN_NUMBER_DATA_WRAPPER,
+      },
+      cisCase: CISCASE_FROM_STORE,
+    });
+
+    expect(await field.noAlienNumbersMessage()).toBeTruthy();
+  });
+
+  it('closes alien number add modal on close', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAddAlienNumberModalButton();
+    await page.clickAlienNumberModalClose();
+
+    expect(field.alienNumberModalFalsy()).toBeFalsy();
+  });
+
+  it('refreshes data and closes alien number add modal on save', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAddAlienNumberModalButton();
+    await page.clickAlienNumberModalSave();
+
+    await waitFor(() => {
+      expect(field.alienNumberModalFalsy()).toBeFalsy();
+    });
+  });
+
+  it('opens confirmation modal on deactivate button click', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAlienNumberActionButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+    expect(field.confirmationModal(ACTIVE_ALIEN_NUMBER_ID, 'deactivate')).toBeTruthy();
+  });
+
+  it('deactivates alien number and close confirmation modal on confirm', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAlienNumberActionButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+    await page.clickConfirmButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+
+    expect(field.confirmationModal(ACTIVE_ALIEN_NUMBER_ID, 'deactivate')).toBeFalsy();
+    expect(useAxiosMock).toHaveBeenCalledWith(
+      {
+        url: `${INTERNAL_APP}/alienNumber/removeAlienNumber`,
+        method: 'POST',
+      },
+      {
+        manual: true,
+      }
+    );
+  });
+
+  it('close confirmation modal on cancel', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAlienNumberActionButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+    await page.clickCancelButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+
+    await waitFor(() => {
+      expect(field.confirmationModal(ACTIVE_ALIEN_NUMBER_ID, 'deactivate')).toBeFalsy();
+    });
+  });
+
+  it('activates alien number and close confirmation modal on confirm', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAlienNumberActionButton(INACTIVE_ALIEN_NUMBER_ID, 'activate');
+    await page.clickConfirmButton(INACTIVE_ALIEN_NUMBER_ID, 'activate');
+
+    expect(field.confirmationModal(INACTIVE_ALIEN_NUMBER_ID, 'activate')).toBeFalsy();
+    expect(useAxiosMock).toHaveBeenCalledWith(
+      {
+        url: `${INTERNAL_APP}/alienNumber/reactivateAlienNumber`,
+        method: 'POST',
+      },
+      {
+        manual: true,
+      }
+    );
+  });
+
+  it('makes alien number primary and close confirmation modal on confirm', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+
+    await page.clickAlienNumberActionButton(ACTIVE_ALIEN_NUMBER_ID, 'make-primary');
+    await page.clickConfirmButton(ACTIVE_ALIEN_NUMBER_ID, 'make-primary');
+
+    expect(field.confirmationModal(ACTIVE_ALIEN_NUMBER_ID, 'make-primary')).toBeFalsy();
+    expect(useAxiosMock).toHaveBeenCalledWith(
+      {
+        url: `${INTERNAL_APP}/alienNumber/editAlienNumber`,
+        method: 'POST',
+      },
+      {
+        manual: true,
+      }
+    );
+  });
+
+  it('shows the progress spinner', async () => {
+    setup({
+      alienNumberHistoryResponse: {
+        loading: true,
+        error: null,
+      },
+      cisCase: CISCASE_FROM_STORE,
+    });
+
+    expect(await field.progressIndicator()).toBeTruthy();
+  });
+
+  it('encounters an error', async () => {
+    const status = 500;
+    const statusText = 'Unable to load alien numbers.';
+
+    setup({
+      alienNumberHistoryResponse: {
+        loading: false,
+        error: {
+          response: {
+            status,
+            statusText,
+          },
+        },
+      },
+      cisCase: CISCASE_FROM_STORE,
+    });
+
+    expect(await field.errors()).toHaveLength(1);
+    expect(await field.error(statusText)).toBeTruthy();
+  });
+
+  test('deactivate error', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+    useAxiosMock.mockReturnValueOnce([
+      {
+        loading: false,
+        error: true,
+        data: undefined,
+      },
+      jest.fn().mockImplementation(() => Promise.reject('error')),
+      jest.fn(),
+    ]);
+    await page.clickAlienNumberActionButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+    await page.clickConfirmButton(ACTIVE_ALIEN_NUMBER_ID, 'deactivate');
+    expect(await screen.findByText('An error occurred while deactivating alien number.')).toBeTruthy();
+  });
+
+  test('activate success', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+    await page.clickAlienNumberActionButton(INACTIVE_ALIEN_NUMBER_ID, 'activate');
+    userEvent.click(await screen.findByElementId(`5034185-activate-confirm`));
+    expect(await screen.findByText('Alien number successfully activated.')).toBeTruthy();
+  });
+
+  test('activate error', async () => {
+    setup({ cisCase: CISCASE_FROM_STORE });
+    useAxiosMock.mockReturnValueOnce([
+      {
+        loading: false,
+        error: true,
+        data: undefined,
+      },
+      jest.fn().mockImplementation(() => Promise.reject('error')),
+      jest.fn(),
+    ]);
+    await page.clickAlienNumberActionButton(INACTIVE_ALIEN_NUMBER_ID, 'activate');
+    userEvent.click(await screen.findByElementId(`5034185-activate-confirm`));
+    expect(await screen.findByText('An error occurred while activating alien number.')).toBeTruthy();
+  });
+});
