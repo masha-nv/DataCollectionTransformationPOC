@@ -1,0 +1,252 @@
+import { Meta, Story } from '@storybook/react';
+import { CaseFlags, ICaseFlagsProps } from './case-flags';
+import { Provider } from 'react-redux';
+import { CISCASE_FROM_STORE, MOCK_USER_SECURITY } from '@uscis/elis/testing';
+import {
+  GET_CASE_FLAGS_CONCURRENT_ADDRESSES,
+  RERUN_RULES_CONCURRENT_ADDRESS,
+  MARK_AS_REVIEWED,
+  MSW_CASE_FLAGS_MOCKS,
+  GET_CASE_FLAGS_REVIEWED,
+  I829_RIDER_PACKET_RECEIPT_NUMBER,
+} from './__test-data__/case-flags.mocks';
+import { ElisContainer } from '@uscis/elis/storybook';
+import { configureStore } from '@reduxjs/toolkit';
+import {
+  cisCaseReducer,
+  initSecurity,
+  refDataReducer,
+  resetSecurity,
+  setCISCase,
+  userSecurityReducer,
+} from '@uscis/elis/state';
+import { FORM_TYPES, ICISCase, UserPermissions, SkillCodes } from '@uscis/elis/domain';
+import { AngularJSScope, AngularJSScopeContext } from '@uscis/elis/angularjs-scope';
+import { DefaultBodyType, MockedRequest, RestHandler } from 'msw';
+import { useEffect } from 'react';
+import { CASE_WITH_CASE_REVIEW_TASK, CASE_WITH_CONDUCT_INTERVIEW_TASK, CASE_WITH_REVIEWED_FLAGS } from './__test-data__/case-flags.fixture';
+
+const STORE = configureStore({
+  reducer: {
+    cisCase: cisCaseReducer.reducer,
+    userSecurity: userSecurityReducer.reducer,
+    I590Case: cisCaseReducer.reducer,
+    refData: refDataReducer.reducer,
+  },
+});
+
+const mockScope: AngularJSScope = {
+  $root: null,
+  $broadcast: (eventType, eventData) => {
+    console.log(`Simulated AngularJS scope broadcast\n\nEvent Type: ${eventType}\nData: ${eventData}`);
+  },
+  $on: (_eventType, _callback) => () => null,
+};
+
+const cisCase: ICISCase = {
+  ...CISCASE_FROM_STORE,
+  receiptNumber: 'IOE111111113',
+  formType: 'I-821D',
+};
+
+const I590Case: ICISCase = {
+  ...CISCASE_FROM_STORE,
+  receiptNumber: 'IOE111111114',
+  formType: 'I-590',
+};
+
+const I485Case: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I485,
+  receiptNumber: 'IOE111111113',
+  uscisNumber: 'IOE111111113',
+};
+
+const N400Case: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.N400,
+  isC4Case: true,
+  receiptNumber: 'IOE0939178160',
+  uscisNumber: 'IOE0939178160',
+};
+
+const I129H1BCase: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I129H1B,
+  isC4Case: true,
+  receiptNumber: 'IOE111191919',
+  uscisNumber: 'IOE111191919',
+};
+
+const I129Case: ICISCase = {
+  ...cisCase, 
+  formType: FORM_TYPES.I129,
+  isC4Case: true, 
+  receiptNumber: 'IOE0000000129', 
+  uscisNumber: 'IOE0000000129',
+};
+
+const I130Case: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I130,
+  receiptNumber: 'IOE0000000130',
+  uscisNumber: 'IOE0000000130',
+};
+
+const I140Case: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I140,
+  receiptNumber: 'IOE0000000140',
+  uscisNumber: 'IOE0000000140',
+};
+
+const I730Case: ICISCase = {
+  ...CASE_WITH_CASE_REVIEW_TASK,
+  formType: FORM_TYPES.I730,
+  receiptNumber: 'IOE0000000730',
+  uscisNumber: 'IOE0000000730',
+};
+
+const I730ConductInterviewCase: ICISCase = {
+  ...CASE_WITH_CONDUCT_INTERVIEW_TASK,
+  formType: FORM_TYPES.I730,
+  receiptNumber: 'IOE1000000730',
+  uscisNumber: 'IOE1000000730',
+};
+
+const I765Case: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I765,
+  receiptNumber: 'IOE0000000765',
+  uscisNumber: 'IOE0000000765',
+};
+
+const I918Case: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I918,
+  receiptNumber: 'IOE0000000918',
+  uscisNumber: 'IOE0000000918',
+};
+
+const I829RiderPacketCase: ICISCase = {
+  ...cisCase,
+  formType: FORM_TYPES.I829,
+  receiptNumber: I829_RIDER_PACKET_RECEIPT_NUMBER,
+  uscisNumber: I829_RIDER_PACKET_RECEIPT_NUMBER,
+  concurrentGroupInfo: {
+    concurrentCases: [
+      {
+        formType: { formNumber: FORM_TYPES.I829 },
+        caseId: 0,
+        receiptNumber: '',
+        personName: '',
+        benefitTypeCode: 0,
+      },
+    ],
+    concurrentType: '',
+    primaryCaseId: 0,
+    primaryFormType: {
+      formNumber: '',
+    },
+  },
+};
+
+export default {
+  component: CaseFlags,
+  title: 'Reusable Components/Case Flags/Case Flags',
+} as Meta;
+
+const generateStory = (
+  mswHandlers: RestHandler<MockedRequest<DefaultBodyType>>[],
+  cisCase: ICISCase | null,
+  props?: Partial<ICaseFlagsProps>,
+  userPermissions?: UserPermissions
+) => {
+  const Component: Story<ICaseFlagsProps> = (args: ICaseFlagsProps) => {
+    useEffect(() => {
+      STORE.dispatch(setCISCase(cisCase));
+      STORE.dispatch(resetSecurity());
+      STORE.dispatch(
+        initSecurity(
+          MOCK_USER_SECURITY.details,
+          MOCK_USER_SECURITY.supervisors,
+          MOCK_USER_SECURITY.caseLifeCyclePermissions,
+          [
+            ...MOCK_USER_SECURITY.skills,
+            SkillCodes.REMOVE_FINAL_HOLD
+          ],
+          {
+            ...MOCK_USER_SECURITY.permissions,
+            usersRole: 'ENT-SG-ELIS-CaseAccess6',
+            userPermissions: userPermissions ?? {},
+          }
+        )
+      );
+    });
+    return (
+      <AngularJSScopeContext.Provider value={mockScope}>
+        <Provider store={STORE}>
+          <ElisContainer>
+            <CaseFlags {...args} />
+          </ElisContainer>
+        </Provider>
+      </AngularJSScopeContext.Provider>
+    );
+  };
+
+  Component.args = {
+    id: 'case-flags-component',
+    receiptNum: cisCase === null ? '' : 'IOE111111113',
+    ...props,
+  };
+
+  Component.parameters = {
+    msw: {
+      handlers: mswHandlers,
+    },
+  };
+
+  return Component;
+};
+export const CaseFlagsPrimary = generateStory(MSW_CASE_FLAGS_MOCKS, {
+  ...cisCase,
+  formType: FORM_TYPES.I130,
+});
+export const CaseFlagsWithPacket = generateStory(MSW_CASE_FLAGS_MOCKS, {
+  ...cisCase,
+  formType: FORM_TYPES.I131,
+});
+export const CaseFlagsTaskUI = generateStory(
+  MSW_CASE_FLAGS_MOCKS,
+  { ...cisCase, caseTypeName: 'DACA' },
+  { userTask: 123, usingConcurrentAddresses: false }
+);
+export const CaseFlagsAddressUI = generateStory(
+  [GET_CASE_FLAGS_CONCURRENT_ADDRESSES, RERUN_RULES_CONCURRENT_ADDRESS, MARK_AS_REVIEWED],
+  cisCase,
+  { userTask: 123, usingConcurrentAddresses: true }
+);
+export const CaseFlagsI590View = generateStory(MSW_CASE_FLAGS_MOCKS, I590Case, { userTask: 123 });
+export const CaseFlagsI485View = generateStory(MSW_CASE_FLAGS_MOCKS, I485Case);
+export const CaseFlagsN400View = generateStory(MSW_CASE_FLAGS_MOCKS, N400Case);
+export const CaseFlagsI129H1BView = generateStory(MSW_CASE_FLAGS_MOCKS, I129H1BCase);
+export const CaseFlagsI129View = generateStory(MSW_CASE_FLAGS_MOCKS, I129Case);
+export const CaseFlagsI130View = generateStory(MSW_CASE_FLAGS_MOCKS, I130Case);
+export const CaseFlagsI140View = generateStory(MSW_CASE_FLAGS_MOCKS, I140Case);
+export const CaseFlagsI730View = generateStory(MSW_CASE_FLAGS_MOCKS, I730Case, { userTask: 123 });
+export const CaseFlagsI730ConductInterviewView = generateStory(MSW_CASE_FLAGS_MOCKS, I730ConductInterviewCase)
+export const CaseFlagsNullCase = generateStory(MSW_CASE_FLAGS_MOCKS, null);
+export const CaseFlagsReviewed = generateStory(
+  [GET_CASE_FLAGS_REVIEWED, ...MSW_CASE_FLAGS_MOCKS],
+  CASE_WITH_REVIEWED_FLAGS,
+  { userTask: 123 }
+);
+export const CaseFlagsReadOnly = generateStory(MSW_CASE_FLAGS_MOCKS, I730Case, {
+  userTask: 123,
+  isReadOnly: true,
+});
+export const CaseFlagsHoldFlagView = generateStory(MSW_CASE_FLAGS_MOCKS, I765Case);
+export const CaseFlagsI918View = generateStory(MSW_CASE_FLAGS_MOCKS, I918Case);
+export const CaseFlagsI829RiderPacketView = generateStory(MSW_CASE_FLAGS_MOCKS, I829RiderPacketCase, {
+  userTask: 123,
+});
