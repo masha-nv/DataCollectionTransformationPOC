@@ -1,0 +1,156 @@
+import { Meta, Story } from '@storybook/react';
+import { useEffect } from 'react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import { ElisContainer } from '@uscis/elis/storybook';
+import { CISCASE_FROM_STORE, MOCK_USER_SECURITY } from '@uscis/elis/testing';
+import {
+  cisCaseReducer,
+  setCISCase,
+  initSecurity,
+  userSecurityReducer,
+} from '@uscis/elis/state';
+import { CASE_FILING_TYPE_CODES, ICISCase } from '@uscis/elis/domain';
+import { CaseFilingType } from './case-filing-type';
+import {
+  GET_FILING_CATEGORY_HISTORY,
+  GET_FILING_CATEGORY_HISTORY_EMPTY,
+  GET_FILING_CATEGORY_HISTORY_ERROR,
+  UPDATE_FILING_CATEGORY_SUCCESS,
+  UPDATE_FILING_CATEGORY_ERROR,
+  SAVE_CASE_NOTE_SUCCESS,
+  SAVE_CASE_NOTE_ERROR,
+} from './case-filing-type.mocks';
+
+export default {
+  component: CaseFilingType,
+  title: 'Reusable Components/Case Details/Case Filing Type',
+} as Meta;
+
+const store = configureStore({
+  reducer: {
+    cisCase: cisCaseReducer.reducer,
+    userSecurity: userSecurityReducer.reducer,
+  },
+});
+
+const DEFAULT_CASE: ICISCase = {
+  ...CISCASE_FROM_STORE,
+  caseId: 1234567,
+  caseFilingTypeCode: CASE_FILING_TYPE_CODES.I131RTD_LPR_US,
+  caseFilingType: {
+    description: 'Refugee Travel Document - LPR In US',
+  },
+} as ICISCase;
+
+type StoryWrapperProps = {
+  cisCase: ICISCase | null;
+};
+
+const StoryWrapper: React.FC<React.PropsWithChildren<StoryWrapperProps>> = ({ cisCase, children }) => {
+  useEffect(() => {
+    store.dispatch(setCISCase(cisCase));
+    store.dispatch(
+      initSecurity(
+        MOCK_USER_SECURITY.details,
+        MOCK_USER_SECURITY.supervisors,
+        MOCK_USER_SECURITY.caseLifeCyclePermissions,
+        MOCK_USER_SECURITY.skills,
+        MOCK_USER_SECURITY.permissions
+      )
+    );
+
+    const originalReload = window.location.reload;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        reload: () => null,
+      },
+    });
+
+    return () => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: {
+          ...window.location,
+          reload: originalReload,
+        },
+      });
+    };
+  }, [cisCase]);
+
+  return (
+    <ElisContainer>
+      <Provider store={store}>{children}</Provider>
+    </ElisContainer>
+  );
+};
+
+const Template: Story<{ cisCase: ICISCase | null }> = ({ cisCase }) => {
+  return (
+    <StoryWrapper cisCase={cisCase}>
+      <CaseFilingType onCaseFilingTypeUpdate={() => undefined} />
+    </StoryWrapper>
+  );
+};
+
+export const Primary = Template.bind({});
+Primary.args = {
+  cisCase: DEFAULT_CASE,
+};
+Primary.parameters = {
+  msw: {
+    handlers: [GET_FILING_CATEGORY_HISTORY, UPDATE_FILING_CATEGORY_SUCCESS, SAVE_CASE_NOTE_SUCCESS],
+  },
+};
+
+export const NoHistory = Template.bind({});
+NoHistory.args = {
+  cisCase: DEFAULT_CASE,
+};
+NoHistory.parameters = {
+  msw: {
+    handlers: [GET_FILING_CATEGORY_HISTORY_EMPTY, UPDATE_FILING_CATEGORY_SUCCESS, SAVE_CASE_NOTE_SUCCESS],
+  },
+};
+
+export const HistoryError = Template.bind({});
+HistoryError.args = {
+  cisCase: DEFAULT_CASE,
+};
+HistoryError.parameters = {
+  msw: {
+    handlers: [GET_FILING_CATEGORY_HISTORY_ERROR],
+  },
+};
+
+export const UpdateError = Template.bind({});
+UpdateError.args = {
+  cisCase: DEFAULT_CASE,
+};
+UpdateError.parameters = {
+  msw: {
+    handlers: [GET_FILING_CATEGORY_HISTORY, UPDATE_FILING_CATEGORY_ERROR, SAVE_CASE_NOTE_SUCCESS],
+  },
+};
+
+export const SaveCommentsError = Template.bind({});
+SaveCommentsError.args = {
+  cisCase: DEFAULT_CASE,
+};
+SaveCommentsError.parameters = {
+  msw: {
+    handlers: [GET_FILING_CATEGORY_HISTORY, UPDATE_FILING_CATEGORY_SUCCESS, SAVE_CASE_NOTE_ERROR],
+  },
+};
+
+export const NullCase = Template.bind({});
+NullCase.args = {
+  cisCase: null,
+};
+NullCase.parameters = {
+  msw: {
+    handlers: [],
+  },
+};
