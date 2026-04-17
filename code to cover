@@ -1,0 +1,530 @@
+'use strict'
+
+var app = angular.module('i131CaseReview');
+
+app.controller('I131CaseReviewController', I131CaseReviewController);
+
+I131CaseReviewController.$inject = ['$scope', '$rootScope','$stateParams','$timeout', '$location', 'i131CaseReviewService', 'I131_HP_CASE_REVIEW_UI_HEADER', 'i485CaseReviewService', 
+	'worksheetStatusService','biographicServices','SponsorService','naturalizationService','alienNumberServices','nameServices','dobServices','focusHelper', 'UtilHelper', 'toggleService',
+	'I131_HP_CASE_REVIEW_SUB_SECTION_CODE', 'I131_CAFRP_CASE_REVIEW_UI_HEADER', 'I131_DACA_CASE_REVIEW_UI_HEADER', 'formConfigService', 'BENEFIT_TYPE_DESCRIPTIONS', 
+	'CASE_FILING_TYPE_CODES', 'I131_PIP_CASE_REVIEW_UI_HEADER', 'I131_RP_RTD_CASE_REVIEW_UI_HEADER'];
+
+function I131CaseReviewController($scope, $rootScope,$stateParams,$timeout, $location, i131CaseReviewService, I131_HP_CASE_REVIEW_UI_HEADER, i485CaseReviewService, 
+		worksheetStatusService,biographicServices,SponsorService,naturalizationService,alienNumberServices,nameServices,dobServices,focusHelper, UtilHelper, toggleService, 
+		I131_HP_CASE_REVIEW_SUB_SECTION_CODE, I131_CAFRP_CASE_REVIEW_UI_HEADER, I131_DACA_CASE_REVIEW_UI_HEADER, formConfigService, BENEFIT_TYPE_DESCRIPTIONS, 
+		CASE_FILING_TYPE_CODES, I131_PIP_CASE_REVIEW_UI_HEADER, I131_RP_RTD_CASE_REVIEW_UI_HEADER) {
+	
+	var that = this;
+	var getPath = $rootScope.getPath;
+
+    const YES_RESPONSE = 'Y';
+
+    const DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT = 'Basis justified per Secretary Mayorkas March 6, 2024 memo: '
+        + 'Final Guidance for Parole and Re-Parole of Noncitizens for Purposes of Reunification Pursuant to the Ms. L. Class Action Lawsuit Settlement Agreement';
+
+	$scope.caseProcessingClockToggleEnabled = false;
+	$scope.readOnlyView = false;
+	$scope.navigationSections = []
+	$scope.I131_HP_CASE_REVIEW_UI_HEADER = I131_HP_CASE_REVIEW_UI_HEADER;
+	that.analysisSections = null;
+	that.links = [];
+	that.messages = [];
+	that.paroleRequestedBy = 529;
+	that.isReasonParoleRequestedAnswered = false;
+
+	const TIMER_DISABLED_FILING_TYPES = [CASE_FILING_TYPE_CODES.I131_CFRP_FILING, CASE_FILING_TYPE_CODES.I131_OAW_REPAROLE,
+		CASE_FILING_TYPE_CODES.I131_DOS_LES_PAROLE, CASE_FILING_TYPE_CODES.I131_UHP_REPAROLE];
+	
+	$scope.isI131HP = $scope.cisCase.caseTypeName === 'I-131-HP';
+	$scope.isI131CFRP = $scope.cisCase.caseTypeName === 'I-131-CFRP';
+    $scope.isI131F = $scope.cisCase.caseTypeName == 'I-131F';
+    
+    $scope.isI131PIP = function() {
+		return (CASE_FILING_TYPE_CODES.I131_PIP_FILING_TYPES.includes($scope.cisCase.caseFilingTypeCode));
+	}
+
+    $scope.isI131RPRTD = function() {
+		return (CASE_FILING_TYPE_CODES.I131_RP_RTD_FILING_TYPES.includes($scope.cisCase.caseFilingTypeCode));
+	}
+
+	worksheetStatusService.setCisCase($scope.cisCase);
+
+	toggleService.isFeatureEnabled('backend', 'I-131 HP Case Processing Clock').then(function(result) {
+		if (!TIMER_DISABLED_FILING_TYPES.includes($scope.cisCase.caseFilingTypeCode)){
+			$scope.caseProcessingClockToggleEnabled = result;
+		}
+	}); 
+
+	const doesStringContain = (fullString, subString) => {
+		return fullString.indexOf(subString) >= 0
+	}
+	
+	$scope.readOnlyView = doesStringContain($location.path(), "/taskResolutionView/");
+	
+	var navDataHP = () => [
+		// title property is called for EOIR to differentiate between the UI_HDR_DESC value (which controls the nav section value)
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.GENERAL_SUMMARY, templatePath: getPath('I131_GENERAL_SUMMARY_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the general summary information.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.FLAGS, templatePath: getPath('CASE_FLAGS', 'I485_CASE_REVIEW_PATHS'), reviewText: 'Review flags for this case.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.CASE_LINKING, templatePath: getPath('I485_CASE_LINKING_EXPANDED_VIEW_PATH', 'I485_CASE_LINKING_PATHS'), reviewText: 'Review Linked Cases and add any additional cases, as necessary.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.PENDING_AND_PRIOR_CASES, templatePath: getPath('PRIOR_CASES_PATH', 'PRIOR_CASES_PATHS'), reviewText: 'Please review and identify pending and prior cases.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.WORKSHEET, templatePath: getPath('DATA_REVIEW', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the I-131HP declared data below.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.NAMES_DOBS_CONTACTS, templatePath: getPath('NAMES_DOB_CONTACTS_PATH', 'ACCOUNT_NAMES_PATHS'), reviewText: 'Please review the I-131 HP declared data below.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.BIOMETRICS, templatePath: getPath('MULTIPLE_TCN_BIOMETRICS_PATH', 'FLAG_RESOLUTION_PATHS'), reviewText: 'Please review Biometrics for this case.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.APPOINTMENTS, templatePath: getPath('BIOMETRIC_APPOINTMENTS_PATH', 'APPOINTMENTS_PATHS'), reviewText: 'Please review Appointments for this case.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.PAYMENT, templatePath: getPath('CASE_FEES_PATH', 'CASE_FEES_PATHS'), reviewText: 'Please review the payment information.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.NOTICES_AND_SNAPSHOTS, templatePath: getPath('NOTICES_AND_SNAPSHOTS_PATH', 'NOTICES_AND_SNAPSHOTS_PATHS'), reviewText: 'Please review the Notices and Snapshots.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.SPONSOR_INFO, templatePath: getPath('I131_HP_SPONSOR_PATH', 'SPONSOR_PATHS'), reviewText: 'Please review the Sponsor Information.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.CASE_TAGS, templatePath: getPath('I131_CASE_TAGS_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the Case Tags.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.REPRESENTATIVE_INFO, templatePath: getPath('REPRESENTATIVE_INFO_PATH', 'REPRESENTATIVE_INFO_PATHS'), reviewText: 'Review the representative information.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.EVIDENCE_RFE, templatePath: getPath('EVIDENCE_AND_RFE_PATH', 'EVIDENCE_PATHS'), reviewText: 'Please review the evidence/RFE/NOID below.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.THIRD_AGENCY_DOC, templatePath: getPath('THIRD_AGENCY_DOCUMENTS_VIEW_PATH', 'THIRD_AGENCY_DOCUMENTS_PATHS'), reviewText: 'Please review the Third Agency Documents.'},	
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.RISK_AND_FRAUD, templatePath: getPath('RISK_AND_FRAUD_PATH', 'RISK_AND_FRAUD_PATHS'), reviewText: 'Review the Risk and Fraud information below.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.ADIS_TRAVEL, templatePath: getPath('I131_HP_ADIS_TRAVEL_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Review the ADIS Travel Information below.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.DOS_CCD, templatePath: getPath('I131_CCD_RESULT', 'I131_CCD_PATHS'), reviewText: 'Review the DOS-CCD Information below.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.ANALYSIS, templatePath: getPath('I131_HP_ANALYSIS_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the Analysis for this case.'},
+		{id: I131_HP_CASE_REVIEW_UI_HEADER.RENDER_DECISION, templatePath: getPath('RENDER_DECISION_PATH','I131_PATHS')},
+	].reduce(function(obj, item) {
+		obj[item.id] = item;
+		return obj;
+	}, {});
+
+	var navDataRPRTD = () => [
+		// title property is called for EOIR to differentiate between the UI_HDR_DESC value (which controls the nav section value)
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.GENERAL_SUMMARY, templatePath: getPath('I131_GENERAL_SUMMARY_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the general summary information.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.FLAGS, templatePath: getPath('CASE_FLAGS_PATH_REACT_TASK', 'CASE_FLAGS_PATHS'), reviewText: 'Review flags for this case.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.CASE_LINKING, templatePath: getPath('I485_CASE_LINKING_EXPANDED_VIEW_PATH', 'I485_CASE_LINKING_PATHS'), reviewText: 'Review Linked Cases and add any additional cases, as necessary.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.PENDING_AND_PRIOR_CASES, templatePath: getPath('PRIOR_CASES_PATH', 'PRIOR_CASES_PATHS'), reviewText: 'Please review and identify pending and prior cases.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.WORKSHEET, templatePath: getPath('DATA_REVIEW', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the I-131 declared data below.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.NAMES_DOBS_CONTACTS, templatePath: getPath('NAMES_DOB_CONTACTS_PATH', 'ACCOUNT_NAMES_PATHS'), reviewText: 'Please review the I-131 declared data below.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.BIOMETRICS, templatePath: getPath('BIOMETRICS_REACT_PATH', 'ADJUDICATOR_BIOMETRICS_PATHS'), reviewText: 'Please review Biometrics for this case.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.APPOINTMENTS, templatePath: getPath('BIOMETRIC_APPOINTMENTS_PATH', 'APPOINTMENTS_PATHS'), reviewText: 'Please review Appointments for this case.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.PAYMENT, templatePath: getPath('CASE_FEES_PATH', 'CASE_FEES_PATHS'), reviewText: 'Please review the payment information.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.NOTICES_AND_SNAPSHOTS, templatePath: getPath('NOTICES_AND_SNAPSHOTS_PATH', 'NOTICES_AND_SNAPSHOTS_PATHS'), reviewText: 'Please review the Notices and Snapshots.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.REPRESENTATIVE_INFO, templatePath: getPath('REPRESENTATIVE_INFO_PATH', 'REPRESENTATIVE_INFO_PATHS'), reviewText: 'Review the representative information.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.EVIDENCE_RFE, templatePath: getPath('EVIDENCE_AND_RFE_PATH', 'EVIDENCE_PATHS'), reviewText: 'Please review the evidence/RFE/NOID below.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.RISK_AND_FRAUD, templatePath: getPath('RISK_AND_FRAUD_PATH', 'RISK_AND_FRAUD_PATHS'), reviewText: 'Review the Risk and Fraud information below.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.ADIS_TRAVEL, templatePath: getPath('I131_HP_ADIS_TRAVEL_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Review the ADIS Travel Information below.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.DOS_CCD, templatePath: getPath('I131_CCD_RESULT', 'I131_CCD_PATHS'), reviewText: 'Review the DOS-CCD Information below.'},
+		{id: I131_RP_RTD_CASE_REVIEW_UI_HEADER.RENDER_DECISION, templatePath: getPath('RENDER_DECISION_PATH','I131_PATHS')},
+	].reduce(function(obj, item) {
+		obj[item.id] = item;
+		return obj;
+	}, {});
+
+	var navDataPIP = () => [
+		// title property is called for EOIR to differentiate between the UI_HDR_DESC value (which controls the nav section value)
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.GENERAL_SUMMARY, templatePath: getPath('I131_GENERAL_SUMMARY_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the general summary information.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.FLAGS, templatePath: getPath('CASE_FLAGS_PATH_REACT_TASK', 'CASE_FLAGS_PATHS'), reviewText: 'Review flags for this case.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.CASE_LINKING, templatePath: getPath('I485_CASE_LINKING_EXPANDED_VIEW_PATH', 'I485_CASE_LINKING_PATHS'), reviewText: 'Review Linked Cases and add any additional cases, as necessary.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.PENDING_AND_PRIOR_CASES, templatePath: getPath('PRIOR_CASES_PATH', 'PRIOR_CASES_PATHS'), reviewText: 'Please review and identify pending and prior cases.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.WORKSHEET, templatePath: getPath('DATA_REVIEW', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the I-131 PIP declared data below.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.NAMES_DOBS_CONTACTS, templatePath: getPath('NAMES_DOB_CONTACTS_PATH', 'ACCOUNT_NAMES_PATHS'), reviewText: 'Please review the I-131 PIP declared data below.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.BIOMETRICS, templatePath: getPath('BIOMETRICS_REACT_PATH', 'ADJUDICATOR_BIOMETRICS_PATHS'), reviewText: 'Please review Biometrics for this case.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.APPOINTMENTS, templatePath: getPath('BIOMETRIC_APPOINTMENTS_PATH', 'APPOINTMENTS_PATHS'), reviewText: 'Please review Appointments for this case.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.PAYMENT, templatePath: getPath('CASE_FEES_PATH', 'CASE_FEES_PATHS'), reviewText: 'Please review the payment information.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.NOTICES_AND_SNAPSHOTS, templatePath: getPath('NOTICES_AND_SNAPSHOTS_PATH', 'NOTICES_AND_SNAPSHOTS_PATHS'), reviewText: 'Please review the Notices and Snapshots.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.REPRESENTATIVE_INFO, templatePath: getPath('REPRESENTATIVE_INFO_PATH', 'REPRESENTATIVE_INFO_PATHS'), reviewText: 'Review the representative information.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.EVIDENCE_RFE, templatePath: getPath('EVIDENCE_AND_RFE_PATH', 'EVIDENCE_PATHS'), reviewText: 'Please review the evidence/RFE/NOID below.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.THIRD_AGENCY_DOC, templatePath: getPath('THIRD_AGENCY_DOCUMENTS_VIEW_PATH', 'THIRD_AGENCY_DOCUMENTS_PATHS'), reviewText: 'Please review the Third Agency Documents.'},	
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.RISK_AND_FRAUD, templatePath: getPath('RISK_AND_FRAUD_PATH', 'RISK_AND_FRAUD_PATHS'), reviewText: 'Review the Risk and Fraud information below.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.ADIS_TRAVEL, templatePath: getPath('I131_HP_ADIS_TRAVEL_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Review the ADIS Travel Information below.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.DOS_CCD, templatePath: getPath('I131_CCD_RESULT', 'I131_CCD_PATHS'), reviewText: 'Review the DOS-CCD Information below.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.ANALYSIS, templatePath: getPath('I131_HP_ANALYSIS_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the Analysis for this case.'},
+		{id: I131_PIP_CASE_REVIEW_UI_HEADER.RENDER_DECISION, templatePath: getPath('RENDER_DECISION_PATH','I131_PATHS')},
+	].reduce(function(obj, item) {
+		obj[item.id] = item;
+		return obj;
+	}, {});
+
+	var navDataCAFRP = () => [
+		// title property is called for EOIR to differentiate between the UI_HDR_DESC value (which controls the nav section value)
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.GENERAL_SUMMARY, templatePath: getPath('I131_GENERAL_SUMMARY_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the general summary information.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.FLAGS, templatePath: getPath('CASE_FLAGS', 'I485_CASE_REVIEW_PATHS'), reviewText: 'Review flags for this case.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.CASE_LINKING, templatePath: getPath('I485_CASE_LINKING_EXPANDED_VIEW_PATH', 'I485_CASE_LINKING_PATHS'), reviewText: 'Review Linked Cases and add any additional cases, as necessary.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.PENDING_AND_PRIOR_CASES, templatePath: getPath('PRIOR_CASES_PATH', 'PRIOR_CASES_PATHS'), reviewText: 'Please review and identify pending and prior cases.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.WORKSHEET, templatePath: getPath('DATA_REVIEW', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the I-131 FRP declared data below.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.NAMES_DOBS_CONTACTS, templatePath: getPath('NAMES_DOB_CONTACTS_PATH', 'ACCOUNT_NAMES_PATHS'), reviewText: 'Please review the I-131 FRP declared data below.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.PAYMENT, templatePath: getPath('CASE_FEES_PATH', 'CASE_FEES_PATHS'), reviewText: 'Please review the payment information.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.NOTICES_AND_SNAPSHOTS, templatePath: getPath('NOTICES_AND_SNAPSHOTS_PATH', 'NOTICES_AND_SNAPSHOTS_PATHS'), reviewText: 'Please review the Notices and Snapshots.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.CASE_TAGS, templatePath: getPath('I131_CASE_TAGS_PATH', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the Case Tags.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.REPRESENTATIVE_INFO, templatePath: getPath('REPRESENTATIVE_INFO_PATH', 'REPRESENTATIVE_INFO_PATHS'), reviewText: 'Review the representative information.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.EVIDENCE_RFE, templatePath: getPath('EVIDENCE_AND_RFE_PATH', 'EVIDENCE_PATHS'), reviewText: 'Please review the evidence/RFE/NOID below.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.THIRD_AGENCY_DOC, templatePath: getPath('THIRD_AGENCY_DOCUMENTS_VIEW_PATH', 'THIRD_AGENCY_DOCUMENTS_PATHS'), reviewText: 'Please review the Third Agency Documents.'},	
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.RISK_AND_FRAUD, templatePath: getPath('RISK_AND_FRAUD_PATH', 'RISK_AND_FRAUD_PATHS'), reviewText: 'Review the Risk and Fraud information below.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.DOS_CCD, templatePath: getPath('I131_CCD_RESULT', 'I131_CCD_PATHS'), reviewText: 'Review the DOS-CCD Information below.'},
+		{id: I131_CAFRP_CASE_REVIEW_UI_HEADER.RENDER_DECISION, templatePath: getPath('RENDER_DECISION_PATH','I131_PATHS')},
+	].reduce(function(obj, item) {
+		obj[item.id] = item;
+		return obj;
+	}, {});
+	
+	var navDataDACA = () => [
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.WORKSHEET, templatePath: getPath('DATA_REVIEW', 'I131_CASE_REVIEW_PATHS'), reviewText: 'Please review the I-131 DACA declared data below.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.FLAGS, templatePath: getPath('CASE_FLAGS_PATH_REACT_TASK', 'CASE_FLAGS_PATHS'), reviewText: 'Review flags for this case.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.CASE_LINKING, templatePath: getPath('RELATED_CASES_REACT_VIEW', 'RELATED_CASES_PATHS'), reviewText: 'Review Linked Cases and add any additional cases, as necessary.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.PENDING_AND_PRIOR_CASES, templatePath: getPath('PRIOR_CASES_PATH', 'PRIOR_CASES_PATHS'), reviewText: 'Please review and identify pending and prior cases.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.ACCOUNT_NAMES, templatePath: getPath('ACCOUNT_NAMES_REACT_PATH', 'ACCOUNT_NAMES_PATHS'), reviewText: 'Please review the account names for this case'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.DATE_OF_BIRTH, templatePath: getPath('DOB_REACT_PATH', 'DOB_PATHS'), reviewText: 'Please review the date of birth information for this case.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.CONTACTS, templatePath: getPath('CONTACTS_LIST_PATH_REACT', 'CONTACTS_PATHS'), reviewText: 'Please review the contacts for this case.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.PAYMENT, templatePath: getPath('CASE_FEES_PATH', 'CASE_FEES_PATHS'), reviewText: 'Please review the payment information.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.APPOINTMENTS, templatePath: getPath('BIOMETRIC_APPOINTMENTS_PATH', 'APPOINTMENTS_PATHS'), reviewText: 'Please review appointments for this case.'},		
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.NOTICES_AND_SNAPSHOTS, templatePath: getPath('NOTICES_AND_SNAPSHOTS_REACT_PATH', 'NOTICES_AND_SNAPSHOTS_PATHS'), reviewText: 'Please review the Notices and Snapshots.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.BIOMETRICS, templatePath: getPath('MULTIPLE_TCN_BIOMETRICS_PATH','FLAG_RESOLUTION_PATHS'), reviewText: 'Please review Biometrics for this case.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.REPRESENTATIVE_INFO, templatePath: getPath('REPRESENTATIVE_INFO_PATH', 'REPRESENTATIVE_INFO_PATHS'), reviewText: 'Review the representative information.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.EVIDENCE_RFE, templatePath: getPath('EVIDENCE_AND_RFE_PATH', 'EVIDENCE_PATHS'), reviewText: 'Please review the evidence/RFE/NOID below.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.TRAVEL_HISTORY, templatePath: getPath('TRAVEL_HISTORY_PATH', 'TRAVEL_HISTORY_PATHS'), reviewText: 'Please review the travel history for this case.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.RISK_AND_FRAUD, templatePath: getPath('RISK_AND_FRAUD_PATH', 'RISK_AND_FRAUD_PATHS'), reviewText: 'Review the Risk and Fraud information below.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.DOS_CCD, templatePath: getPath('I131_CCD_RESULT', 'I131_CCD_PATHS'), reviewText: 'Review the DOS-CCD Information below.'},
+		{id: I131_DACA_CASE_REVIEW_UI_HEADER.RENDER_DECISION, templatePath: getPath('RENDER_DECISION_PATH','I131_PATHS')},
+	].reduce(function(obj, item) {
+		obj[item.id] = item;
+		return obj;
+	}, {});
+
+	if ($scope.navigationSections.length == 0 && $scope.cisCase && $scope.isI131F) {
+		$scope.navigationSections = i131CaseReviewService.getNavItemsForI131F();
+		$scope.navigation = { activeLink: $scope.navigationSections[0].links[0] };
+        $scope.appPetName = {"lastName" : $scope.cisCase.lastName, "firstName" : $scope.cisCase.firstName, "middleName" : $scope.cisCase.middleName};
+        $scope.currentPerson = $scope.cisCase.personId;
+        i131CaseReviewService.getWorksheetStatusesForI131F($scope.cisCase.caseId)
+            .then(function(result) {
+                result.data.forEach(function(item) {
+                    if(item.status === "Yes") {
+                        $scope.navigationSections.flatMap(navSection => navSection.links).find(n => item.headerId === n.id).completed = true;
+                    }
+                });
+            });
+	}
+	else {
+		var navData = $scope.cisCase.caseFilingTypeCode === CASE_FILING_TYPE_CODES.I131_CFRP_FILING ? navDataCAFRP() : 
+			$scope.cisCase.caseFilingTypeCode === CASE_FILING_TYPE_CODES.I131_DACA_SWF ? navDataDACA() : 
+			$scope.isI131PIP() ? navDataPIP() : $scope.isI131RPRTD() ? navDataRPRTD() : navDataHP();
+			
+		i131CaseReviewService.getWorksheetStatuses($scope.cisCase.caseId)
+		.then(function(result) {
+			result.data.forEach(function(item) {
+				item.status === "Yes" ? navData[item.headerId].completed = true : navData[item.headerId].completed = false;
+		   	});
+		})
+		.then($scope.cisCase.caseFilingTypeCode === CASE_FILING_TYPE_CODES.I131_CFRP_FILING ? i131CaseReviewService.getUIHeaderForCAFRP : 
+			$scope.cisCase.caseFilingTypeCode === CASE_FILING_TYPE_CODES.I131_DACA_SWF ? i131CaseReviewService.getUIHeaderForDACA : $scope.isI131PIP() ? 
+			i131CaseReviewService.getUIHeaderForPIP : $scope.isI131RPRTD() ? i131CaseReviewService.getUIHeaderForRPRTD : i131CaseReviewService.getUIHeader)
+		.then(function(result) {
+			if(!$scope.isI131RPRTD()){
+				orderSection(result.data);
+			}
+			mergeNavData(result.data);
+			//
+			$scope.navigationSections = result.data.links;
+			let idForNavigation = $scope.navigationSections[0].links[0];
+			let linkForNavigation = $location.search().link;
+			if (linkForNavigation) {
+				if (linkForNavigation === 'renderDecision') {
+					linkForNavigation = I131_HP_CASE_REVIEW_UI_HEADER.RENDER_DECISION;
+				}
+				let matchingLinks = $scope.navigationSections.flatMap((section) => section.links).filter((link) => link.id === linkForNavigation);
+				if (matchingLinks.length > 0) {
+					idForNavigation = matchingLinks[0];
+				}
+			}
+	  		$scope.navigation = { activeLink: idForNavigation };
+		});
+	}
+	
+	function orderSection(section) {	
+		var caseDataLinks = section.links[1].links;
+		const biometricsAndAppointments = caseDataLinks.splice(caseDataLinks.length-2, 2);
+		caseDataLinks.splice.apply(caseDataLinks, [2, 0].concat(biometricsAndAppointments));
+	}
+		
+	function mergeNavData(section) {		
+		if(navData[section.id]) {				
+			section = angular.extend(section, navData[section.id]);	
+		}
+
+		section.visible = true;
+
+		if(!section.links) {
+			return;
+		}
+
+		for(var i = 0; i < section.links.length; i++) {
+			mergeNavData(section.links[i]);
+		}
+		
+		if($scope.is1f()){
+			callGetPassportData($scope.cisCase.beneficiaryId).then( function(response) {
+				$scope.cisCase.beneficiaryPassportNumber = response.data});
+		}
+		
+		callGetPassportData($scope.cisCase.personId).then( function(response) {
+			$scope.cisCase.passportNumber = response.data});
+			
+		$scope.appPetName = {"lastName" : $scope.cisCase.lastName, "firstName" : $scope.cisCase.firstName, "middleName" : $scope.cisCase.middleName}
+		$scope.beneficiaryPlaceOfBirth = $scope.cisCase.beneficiaryCountryOfBirth ? UtilHelper.lookUp($rootScope.refData.birthCountryCodes,$scope.cisCase.beneficiaryCountryOfBirth,"birthCountryCode","birthCountryName") : '';
+		$scope.petOrAppPlaceOfBirth = $scope.cisCase.countryOfBirth  ? UtilHelper.lookUp($rootScope.refData.birthCountryCodes,$scope.cisCase.countryOfBirth,"birthCountryCode","birthCountryName") : '';
+	}
+	
+	const callGetPassportData = (beneficiaryId)=>{
+		let isIncludeInactiveData = $scope.cisCase.formType === 'I-131' && $scope.cisCase.formRevisionDate >= '2024-06-17';
+		const getPassportData = isIncludeInactiveData ? biographicServices.getNonHistoricalPassportData($scope.cisCase.caseId, beneficiaryId)
+				: biographicServices.getPassportData($scope.cisCase.caseId, beneficiaryId);
+		return getPassportData;
+	}
+			
+	$scope.updateReviewed = function(id, completed) {
+		i485CaseReviewService.toggleReviewed($scope.cisCase.caseId, id, completed)
+		.then(function() {
+			$scope.navigation.activeLink.completed = completed;
+		})
+	}
+	
+	
+	$scope.cisCase.getSponsorData = function(sponsorId){
+		
+		if($scope.cisCase.sponsorIds.length == 0){
+			return;
+		}
+		
+		// retrieve sponsor data based on Id 
+		callGetPassportData(sponsorId).then(function(response) {
+			that.sponsorPassportNumber = response.data;
+		});
+			
+		alienNumberServices.getAlienNumbersWithHistory(sponsorId, $scope.cisCase.caseId).then(function(response) {
+			that.sponsorAlienNumber = response.data.primaryAlienNumber;
+		});
+		
+		naturalizationService.getBiographics($stateParams.receiptNumber,sponsorId).then(function(response){
+			that.sponsorPlaceOfBirth = response.data.cobs.latest.item.countryName;
+			that.sponsorGender = response.data.genders.latest.item.description;
+		});
+		
+		dobServices.getDataList($scope.cisCase.caseId, sponsorId, false).then(function(response) {
+				that.sponsorDob = response.data[0].birthDate;
+				});
+					
+		nameServices.getCasePersonNames($scope.cisCase.caseId, sponsorId)
+    		.then(function(response) {
+			that.sponsorName = {"lastName" : response.data.primaryLastName, "firstName" : response.data.primaryFirstName, "middleName" : response.data.primaryMiddleName};	
+    		})
+
+		SponsorService.getCitizenshipInfo(sponsorId).then(function(response) {
+			that.sponsorCOC = response.data.countriesOfCitizenship[0];
+			if(response.data.countriesOfCitizenship.length > 1){
+				that.sponsorACOC = response.data.countriesOfCitizenship.filter(coc => coc !== that.sponsorCOC);
+			}
+		});	
+
+		if($scope.shouldUseMultipleCobs && ($scope.isI131HP || $scope.isI131CFRP)) {
+			biographicServices.getAllPersonCountriesOfBirthDTO(sponsorId).then(function(response) {
+				that.sponsorPrimaryCob = response.data.personCountryOfBirthDTOList.filter(cob => cob.primaryIndicator == true);
+				that.sponsorOtherCobs = response.data.personCountryOfBirthDTOList.filter(cob => cob.primaryIndicator == false);
+			});	
+		}
+	}
+	
+	formConfigService.getFormConfigValue($scope.cisCase.formType, 'usePersonCountryOfBirthEnabled').then(result => {
+		$scope.shouldUseMultipleCobs = result;
+	});
+
+	const OTHER_PETITIONED_HP_TYPES = new Set();
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_OUTSIDE_ADVANCE_PAROLE);
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_OUTSIDE_INITIAL_PAROLE);
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_OUTSIDE_US_INITIAL_PAROLE_NO_PROGRAM);
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_INSIDE_US_INITIAL_PAROLE);
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_INSIDE_US_INITIAL_PAROLE_NO_PROGRAM);
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_INSIDE_US_NEW_PERIOD_OF_PAROLE);
+	OTHER_PETITIONED_HP_TYPES.add(BENEFIT_TYPE_DESCRIPTIONS.OTHER_INSIDE_US_NEW_PERIOD_OF_PAROLE_NO_PROGRAM);
+	
+	$scope.is1f = function() {
+		return OTHER_PETITIONED_HP_TYPES.has($scope.cisCase.benefitType);
+	}
+	
+	$scope.petOrBenHeader = function() {
+		return $scope.is1f() ? "Petitioner Summary" : "Applicant Summary";
+	}
+	
+	$scope.i131applicationType = '';
+	$scope.i131Persons = [];
+	$scope.sponsorSelected = -1;
+	$scope.load131Person = function(){
+		if([24,146,148,150,152,154,156].includes($scope.cisCase.benefitType)){
+			$scope.i131applicationType ='1E';
+			$scope.i131Persons.push({
+				role: "Applicant",
+				id: $scope.cisCase.personId
+			})
+		}
+		if([25,147,149,151,153,155,157].includes($scope.cisCase.benefitType)){
+			$scope.i131applicationType = '1F';
+			$scope.i131Persons.push({
+				role: "Beneficiary",
+				id: $scope.cisCase.beneficiaryId
+			},
+			{
+				role: "Petitioner",
+				id: $scope.cisCase.petitionerId
+			})
+		}
+		if($scope.i131Persons.length !== 0){
+			that.currentPerson = $scope.i131Persons[0].id;
+			$scope.currentPerson = that.currentPerson
+		}
+	}
+	$scope.load131Person();
+	
+	$scope.changeCurrentTab = function(person) {
+		$scope.currentPerson = person;
+		$scope.sponsorSelected = $scope.cisCase.sponsorIds.indexOf(person);
+	}
+
+	that.getAnalysisQuestionData = function() {
+		i131CaseReviewService.getAnalysisUIHeader().then(function(response) {
+			response.data.links.forEach(function(link) {
+                worksheetStatusService.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType(
+                        $scope.cisCase.caseId, link.id, $scope.cisCase.caseFilingTypeCode).then(function(response) {
+                    link.childQuestions = response.data;
+                    
+                    
+                    // swap military and other reason to avoid recreating a whole new view for PIP
+                    if (response.data[0].headerId === I131_HP_CASE_REVIEW_UI_HEADER.PAROLE_REQUEST && $scope.isI131PIP()) {
+						let questionToSwap = response.data[1].childQuestions[6];
+						response.data[1].childQuestions[6] = response.data[1].childQuestions[5];
+						response.data[1].childQuestions[5] = questionToSwap;
+					}
+                    
+					if(response.data[1].headerId == 563 && $scope.cisCase.caseFilingTypeCode === CASE_FILING_TYPE_CODES.I131_OAW_REPAROLE){
+							response.data[1].childQuestions[3].yes = true;
+							response.data[1].childQuestions[3].responseCd = YES_RESPONSE;
+
+							response.data[1].childQuestions[5].yes = true;
+							response.data[1].childQuestions[5].responseCd = YES_RESPONSE;
+							response.data[1].childQuestions[5].responseText = 'OAW Re-Parole';
+					}
+					if (response.data[0].headerId === I131_HP_CASE_REVIEW_UI_HEADER.PAROLE_REQUEST) {
+						that.isReasonParoleRequestedAnswered = that.isAnsweredReasonParoleRequested(response.data);
+					}
+				});
+			});
+			that.links = response.data.links;
+			that.analysisSections = response.data.links.reduce(function(map, obj) {
+				map[obj.id] = obj;
+				return map;
+			}, {});
+		});
+	}
+	
+	that.isAnsweredReasonParoleRequested = function(paroleRequestQuestions) {
+		for (let i = 0; i < paroleRequestQuestions.length; i++) {
+			if (paroleRequestQuestions[i].subsectionCodeId === I131_HP_CASE_REVIEW_SUB_SECTION_CODE.REASON_PAROLE_REQUESTED) {
+				for (let j = 0; j < paroleRequestQuestions[i].childQuestions.length; j++) {
+					if (paroleRequestQuestions[i].childQuestions[j].responseCd) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	that.submitAnalysisQuestions = function(valid) {
+		if(!valid) {
+			return;
+		}
+		that.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER.PAROLE_REQUEST].childQuestions[0].childQuestions.forEach(function(question) {
+			if (question.subsectionCode.keyId === that.paroleRequestedBy) {
+				question.responseCd = YES_RESPONSE;
+			} else {
+				question.responseCd = null;
+			}
+		});
+		let analysisOfParoleSection = that.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER.ANALYSIS_OF_PAROLE_REASON];
+		if (analysisOfParoleSection.childQuestions[0].responseCd === 'N' && analysisOfParoleSection.childQuestions[1].responseCd === 'N') {
+			clearAnswers(that.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER.THE_EXCERCISE_OF_DISCRETION].childQuestions)
+		}
+		that.links.forEach(function(link) {
+			clearInvalidAnswersByDependencies(link);
+		})
+		
+		worksheetStatusService.saveUIHeaderQuestionsByIdAndTaskIdAndCaseFilingType($scope.cisCase.caseId, I131_HP_CASE_REVIEW_UI_HEADER.ANALYSIS,
+			$scope.cisCase.userTask.id, that.links, $scope.cisCase.caseFilingTypeCode).then(function() {
+			let id = 'alertSection' + that.messages.length;
+			that.messages.push({type: 'success', text: 'Successfully saved the Analysis information', id: id})
+			$timeout(function(){
+				focusHelper.setFocusToElement(id);
+			});
+		});
+	}
+	
+	function clearInvalidAnswersByDependencies(question) {
+		question.childQuestions.forEach(function(subquestion) {
+			if (subquestion.subsectionCode.showIfParentResponseIs && question.responseCd !== subquestion.subsectionCode.showIfParentResponseIs) {
+				clearAnswers([subquestion]);
+			} else {
+				clearInvalidAnswersByDependencies(subquestion);
+			}
+		});
+	}
+	
+	function clearAnswers(questions) {
+		questions.forEach(function(question) {
+			question.responseCd = null;
+			question.responseText = null;
+			question.yes = false;
+			clearAnswers(question.childQuestions);
+		});
+	}
+	
+	that.updateCheckbox = function(option) {
+		if (option.yes) {
+			option.responseCd = null;
+		} else {
+			option.responseCd = YES_RESPONSE;
+		}
+		that.isReasonParoleRequestedAnswered = that.isAnsweredReasonParoleRequested(that.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER.PAROLE_REQUEST].childQuestions);
+	}
+
+	$scope.formatDate = function(date) {
+		var yyyy = date.substring(0, 4);
+		var mm = date.substring(5, 7);
+		var dd = date.substring(8, 10);
+		var formattedDate = mm + '/' + dd + '/' + yyyy
+		return formattedDate
+	}
+
+	$scope.getCountryName = function(countryCode) {
+		var countryName = "";
+        if(countryCode === null || countryCode === undefined) {
+        	return 'UNKNOWN COUNTRY';
+        }
+        angular.forEach($scope.refData.countryCodes, function (country, index) {
+            if (country.countryCode === countryCode) {
+                countryName = country.countryName;
+                return;
+            }
+        })
+        return countryName.toUpperCase();
+    }
+
+    that.isI131FRTFReParoleCase = () => {
+        return $scope.cisCase.caseFilingTypeCode === CASE_FILING_TYPE_CODES.I131_FRTF_RE_PAROLE;
+    }
+
+    that.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification = function(analysisOfParoleReasonQuestion) {
+        const analysisOfParoleReasonJustificationQuestion = that.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER.ANALYSIS_OF_PAROLE_REASON].childQuestions
+            .find(childQuestion => childQuestion.subsectionCodeId === I131_HP_CASE_REVIEW_SUB_SECTION_CODE.URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON);
+        if (!that.isI131FRTFReParoleCase() || analysisOfParoleReasonQuestion.subsectionCodeId !== I131_HP_CASE_REVIEW_SUB_SECTION_CODE.URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT
+            || !analysisOfParoleReasonJustificationQuestion) {
+            return;
+        }
+
+        if (analysisOfParoleReasonQuestion.responseCd === YES_RESPONSE && (!analysisOfParoleReasonJustificationQuestion.responseText
+            || analysisOfParoleReasonJustificationQuestion.responseText === '')) {
+            analysisOfParoleReasonJustificationQuestion.responseText = DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT;
+        } else if (analysisOfParoleReasonQuestion.responseCd !== YES_RESPONSE && analysisOfParoleReasonJustificationQuestion.responseText === DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT) {
+            analysisOfParoleReasonJustificationQuestion.responseText = '';
+        }
+    }
+
+};
