@@ -1,0 +1,392 @@
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@uscis/elis/testing/library';
+import { ModifiableContactBlock } from './modifiable-contact-block';
+
+const mockUseRefData = jest.fn();
+
+jest.mock('@uscis/elis/state', () => ({
+  __esModule: true,
+  useRefData: () => mockUseRefData(),
+}));
+
+jest.mock('../i131-rp-rtd-rd.module.scss', () => ({
+  __esModule: true,
+  default: {
+    'normalize-select-size': 'normalize-select-size',
+  },
+}));
+
+jest.mock('@elis/react-beacon', () => {
+  const React = require('react');
+
+  return {
+    __esModule: true,
+    CardVariant: {
+      gray: 'gray',
+    },
+    SelectSize: {
+      fill: 'fill',
+    },
+    Card: ({
+      id,
+      children,
+    }: {
+      id?: string;
+      children: React.ReactNode;
+    }) => <div data-testid={id}>{children}</div>,
+    Label: ({
+      children,
+      htmlFor,
+    }: {
+      children: React.ReactNode;
+      htmlFor?: string;
+    }) => <label htmlFor={htmlFor}>{children}</label>,
+    TextInput: ({
+      id,
+      value,
+      disabled,
+      onChange,
+    }: {
+      id?: string;
+      value?: string;
+      disabled?: boolean;
+      onChange?: (evt: React.ChangeEvent<HTMLInputElement>) => void;
+    }) => (
+      <input
+        id={id}
+        value={value ?? ''}
+        disabled={disabled}
+        onChange={onChange}
+        readOnly={false}
+      />
+    ),
+    Select: ({
+      id,
+      value,
+      disabled,
+      onChange,
+      children,
+    }: {
+      id?: string;
+      value?: string;
+      disabled?: boolean;
+      onChange?: (evt: React.ChangeEvent<HTMLSelectElement>) => void;
+      children: React.ReactNode;
+    }) => (
+      <select id={id} value={value ?? ''} disabled={disabled} onChange={onChange}>
+        {children}
+      </select>
+    ),
+    SelectOption: ({
+      value,
+      children,
+    }: {
+      value: string;
+      children: React.ReactNode;
+    }) => <option value={value}>{children}</option>,
+  };
+});
+
+describe('ModifiableContactBlock', () => {
+  const currentState = {
+    sendToUSAddress: false,
+    consulate: 'LND',
+    contact: {
+      CO: 'Jane Doe',
+      street: '123 Main St',
+      street2: 'Apt 4',
+      city: 'Atlanta',
+      state: 'GA',
+      zipCode: '30301',
+      country: 'US',
+      phone: '111-222-3333',
+      email: 'jane@example.com',
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseRefData.mockReturnValue({
+      countryCodes: [
+        { countryCode: 'US', countryName: 'United States' },
+        { countryCode: 'CA', countryName: 'Canada' },
+      ],
+    });
+  });
+
+  it('should render all fields with current values', () => {
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByTestId('address-block')).toBeTruthy();
+    expect(screen.getByLabelText('C/O')).toHaveValue('Jane Doe');
+    expect(screen.getByLabelText('Street Address')).toHaveValue('123 Main St');
+    expect(screen.getByLabelText('Stress Address Line 2')).toHaveValue('Apt 4');
+    expect(screen.getByLabelText('City')).toHaveValue('Atlanta');
+    expect(screen.getByLabelText('State / Province / Region')).toHaveValue('GA');
+    expect(screen.getByLabelText('Zip / Postal Code')).toHaveValue('30301');
+    expect(screen.getByLabelText('Country')).toHaveValue('US');
+    expect(screen.getByLabelText('Phone')).toHaveValue('111-222-3333');
+    expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com');
+  });
+
+  it('should render country options from ref data', () => {
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByRole('option', { name: 'United States' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Canada' })).toBeTruthy();
+  });
+
+  it('should disable all inputs when readOnly is true', () => {
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={jest.fn()}
+        readOnly={true}
+      />
+    );
+
+    expect(screen.getByLabelText('C/O')).toBeDisabled();
+    expect(screen.getByLabelText('Street Address')).toBeDisabled();
+    expect(screen.getByLabelText('Stress Address Line 2')).toBeDisabled();
+    expect(screen.getByLabelText('City')).toBeDisabled();
+    expect(screen.getByLabelText('State / Province / Region')).toBeDisabled();
+    expect(screen.getByLabelText('Zip / Postal Code')).toBeDisabled();
+    expect(screen.getByLabelText('Country')).toBeDisabled();
+    expect(screen.getByLabelText('Phone')).toBeDisabled();
+    expect(screen.getByLabelText('Email')).toBeDisabled();
+  });
+
+  it('should call onUpdate when C/O changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('C/O'));
+    userEvent.type(screen.getByLabelText('C/O'), 'John Smith');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        CO: 'John Smith',
+      },
+    });
+  });
+
+  it('should call onUpdate when street changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('Street Address'));
+    userEvent.type(screen.getByLabelText('Street Address'), '456 Oak St');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        street: '456 Oak St',
+      },
+    });
+  });
+
+  it('should call onUpdate when street2 changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('Stress Address Line 2'));
+    userEvent.type(screen.getByLabelText('Stress Address Line 2'), 'Unit 12');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        street2: 'Unit 12',
+      },
+    });
+  });
+
+  it('should call onUpdate when city changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('City'));
+    userEvent.type(screen.getByLabelText('City'), 'Boston');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        city: 'Boston',
+      },
+    });
+  });
+
+  it('should call onUpdate when state changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('State / Province / Region'));
+    userEvent.type(screen.getByLabelText('State / Province / Region'), 'MA');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        state: 'MA',
+      },
+    });
+  });
+
+  it('should call onUpdate when zip code changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('Zip / Postal Code'));
+    userEvent.type(screen.getByLabelText('Zip / Postal Code'), '02110');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        zipCode: '02110',
+      },
+    });
+  });
+
+  it('should call onUpdate when country changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.selectOptions(screen.getByLabelText('Country'), 'CA');
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        country: 'CA',
+      },
+    });
+  });
+
+  it('should call onUpdate when phone changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('Phone'));
+    userEvent.type(screen.getByLabelText('Phone'), '999-888-7777');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        phone: '999-888-7777',
+      },
+    });
+  });
+
+  it('should call onUpdate when email changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.clear(screen.getByLabelText('Email'));
+    userEvent.type(screen.getByLabelText('Email'), 'new@example.com');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      ...currentState,
+      contact: {
+        ...currentState.contact,
+        email: 'new@example.com',
+      },
+    });
+  });
+
+  it('should handle missing ref data by rendering no country options', () => {
+    mockUseRefData.mockReturnValue(undefined);
+
+    render(
+      <ModifiableContactBlock
+        currentState={currentState as never}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Country')).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'United States' })).toBeFalsy();
+  });
+});
