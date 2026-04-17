@@ -1,0 +1,596 @@
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@uscis/elis/testing/library';
+import { CaseFilingType } from './case-filing-type';
+
+type UseAxiosState<T> = {
+  data?: T;
+  error?: unknown;
+  loading: boolean;
+};
+
+type FilingCategoryHistoryItem = {
+  filingCategoryDesc: string;
+  sourceType: string;
+  createdBy: string;
+  createdOn: string;
+};
+
+type AxiosExecutor = (config?: { data?: Record<string, unknown> }) => Promise<unknown>;
+
+type MockCisCase = {
+  caseId?: number;
+  caseFilingTypeCode?: string;
+  caseFilingType?: {
+    description?: string;
+  };
+};
+
+type RefDataOption = {
+  label: string;
+  labelSecondary?: string;
+  onClick: () => void;
+};
+
+const mockUseCISCase = jest.fn<MockCisCase | null, []>();
+const mockUseAxios = jest.fn();
+const mockReload = jest.fn();
+
+jest.mock('@uscis/elis/state', () => ({
+  __esModule: true,
+  useCISCase: () => mockUseCISCase(),
+}));
+
+jest.mock('@uscis/elis/configuration', () => ({
+  __esModule: true,
+  useAxios: (...args: unknown[]) => mockUseAxios(...args),
+}));
+
+jest.mock('@uscis/elis/domain', () => ({
+  __esModule: true,
+  INTERNAL_APP: '/internal-app',
+  CASE_FILING_TYPE_CODES: {
+    I131RTD_LPR_US: 561,
+    I131RTD_Non_LPR_US: 562,
+    I131RTD_LPR_Outside_US: 563,
+    I131RTD_Non_LPR_Outside_US: 564,
+  },
+}));
+
+jest.mock('moment', () => {
+  return (value: Date) => ({
+    format: (_formatString: string) => {
+      const iso = value.toISOString();
+      return iso;
+    },
+  });
+});
+
+jest.mock('./case-filing-type.module.scss', () => ({
+  __esModule: true,
+  default: {
+    'current-item-history': 'current-item-history',
+    'historical-record': 'historical-record',
+  },
+}));
+
+jest.mock('@elis/react-beacon', () => {
+  const ReactModule = require('react') as typeof React;
+
+  type ButtonProps = {
+    id?: string;
+    children?: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    type?: string;
+  };
+
+  type SelectProps = {
+    id?: string;
+    name?: string;
+    label?: string;
+    disabled?: boolean;
+    value?: string;
+    onChange?: (evt: React.ChangeEvent<HTMLSelectElement>) => void;
+    children?: React.ReactNode;
+  };
+
+  type SelectOptionProps = {
+    value: string;
+    children?: React.ReactNode;
+  };
+
+  type TextAreaProps = {
+    id?: string;
+    value?: string;
+    onChange?: (evt: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  };
+
+  type ModalProps = {
+    id?: string;
+    title?: string;
+    children?: React.ReactNode;
+    footer?: React.ReactNode;
+    onRequestClose?: () => void;
+  };
+
+  type AlertProps = {
+    children?: React.ReactNode;
+  };
+
+  type DataViewField = {
+    label: string;
+    field: string;
+    details?: () => React.ReactNode;
+    actions?: (
+      value: unknown,
+      storyData: unknown,
+      index: number,
+      toggle: () => void
+    ) => RefDataOption[];
+  };
+
+  type DataViewProps = {
+    id?: string;
+    title?: string;
+    toolbar?: React.ReactNode;
+    fields: DataViewField[];
+    data: string;
+  };
+
+  const DataView = ({ title, toolbar, fields, data }: DataViewProps) => {
+    const [detailsVisible, setDetailsVisible] = ReactModule.useState(false);
+
+    const detailRenderer = fields[0]?.details;
+    const actions = fields[0]?.actions
+      ? fields[0].actions(undefined, undefined, 0, () => setDetailsVisible((prev) => !prev))
+      : [];
+
+    return (
+      <div data-testid="data-view">
+        <div>{title}</div>
+        <div>{toolbar}</div>
+        <div>{data}</div>
+        {actions.map((action) => (
+          <button key={action.label} type="button" onClick={action.onClick}>
+            {detailsVisible ? action.labelSecondary ?? action.label : action.label}
+          </button>
+        ))}
+        {detailsVisible && detailRenderer ? <div data-testid="details-content">{detailRenderer()}</div> : null}
+      </div>
+    );
+  };
+
+  return {
+    __esModule: true,
+    AlertVariant: {
+      success: 'success',
+      error: 'error',
+    },
+    ButtonType: {
+      primary: 'primary',
+      secondary: 'secondary',
+      tertiary: 'tertiary',
+    },
+    DataViewLabelColumnWidth: {
+      medium: 'medium',
+    },
+    IconType: {
+      pencilAlt: 'pencilAlt',
+    },
+    SelectSize: {
+      fill: 'fill',
+    },
+    SelectType: {
+      primary: 'primary',
+    },
+    CardVariant: {
+      gray: 'gray',
+    },
+    Alert: ({ children }: AlertProps) => <div role="alert">{children}</div>,
+    Button: ({ id, children, onClick, disabled }: ButtonProps) => (
+      <button id={id} type="button" onClick={onClick} disabled={disabled}>
+        {children}
+      </button>
+    ),
+    DataView,
+    Icon: () => <span>icon</span>,
+    Label: ({
+      children,
+      htmlFor,
+      required,
+    }: {
+      children?: React.ReactNode;
+      htmlFor?: string;
+      required?: boolean;
+    }) => (
+      <label htmlFor={htmlFor}>
+        {children}
+        {required ? ' *' : ''}
+      </label>
+    ),
+    Modal: ({ id, title, children, footer, onRequestClose }: ModalProps) => (
+      <div data-testid={id}>
+        <div>{title}</div>
+        <button type="button" onClick={onRequestClose}>
+          close-modal
+        </button>
+        <div>{children}</div>
+        <div>{footer}</div>
+      </div>
+    ),
+    Select: ({ id, name, label, disabled, value, onChange, children }: SelectProps) => (
+      <label htmlFor={id}>
+        {label}
+        <select id={id} name={name} disabled={disabled} value={value} onChange={onChange}>
+          {children}
+        </select>
+      </label>
+    ),
+    SelectOption: ({ value, children }: SelectOptionProps) => <option value={value}>{children}</option>,
+    TextArea: ({ id, value, onChange }: TextAreaProps) => <textarea id={id} value={value} onChange={onChange} />,
+  };
+});
+
+describe('CaseFilingType', () => {
+  const historyExecutor = jest.fn<Promise<unknown>, [({ data?: Record<string, unknown> } | undefined)?]>();
+  const updateExecutor = jest.fn<Promise<unknown>, [({ data?: Record<string, unknown> } | undefined)?]>();
+  const commentsExecutor = jest.fn<Promise<unknown>, [({ data?: Record<string, unknown> } | undefined)?]>();
+
+  const baseCase: MockCisCase = {
+    caseId: 123,
+    caseFilingTypeCode: '561',
+    caseFilingType: {
+      description: 'Refugee Travel Document - LPR In US',
+    },
+  };
+
+  function setupUseAxios(params?: {
+    historyState?: UseAxiosState<FilingCategoryHistoryItem[]>;
+    updateState?: UseAxiosState<unknown>;
+    commentsState?: UseAxiosState<unknown>;
+  }): void {
+    const historyState: UseAxiosState<FilingCategoryHistoryItem[]> = params?.historyState ?? {
+      data: undefined,
+      error: undefined,
+      loading: false,
+    };
+
+    const updateState: UseAxiosState<unknown> = params?.updateState ?? {
+      data: undefined,
+      error: undefined,
+      loading: false,
+    };
+
+    const commentsState: UseAxiosState<unknown> = params?.commentsState ?? {
+      data: undefined,
+      error: undefined,
+      loading: false,
+    };
+
+    mockUseAxios.mockImplementation(
+      (
+        request: string | { url: string; method: string },
+        options?: { manual?: boolean; useCache?: boolean }
+      ) => {
+        const url = typeof request === 'string' ? request : request.url;
+
+        if (url.includes('/filing-category-history')) {
+          return [historyState, historyExecutor] as const;
+        }
+
+        if (url.includes('/filing-category') && !url.includes('/filing-category-history')) {
+          return [updateState, updateExecutor] as const;
+        }
+
+        if (url.includes('/notes1000')) {
+          return [commentsState, commentsExecutor] as const;
+        }
+
+        return [{ data: undefined, error: undefined, loading: false }, jest.fn()] as const;
+      }
+    );
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseCISCase.mockReturnValue(baseCase);
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        reload: mockReload,
+      },
+    });
+  });
+
+  it('should render current filing category and edit button', () => {
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    expect(screen.getByText('Filing Category')).toBeTruthy();
+    expect(screen.getByText('Refugee Travel Document - LPR In US')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /edit/i })).toBeTruthy();
+  });
+
+  it('should open modal and reset values when edit is clicked', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+
+    expect(await screen.findByTestId('case-filing-type-modal')).toBeTruthy();
+    expect(screen.getByLabelText('Filing Category')).toHaveValue('');
+    expect(screen.queryByLabelText('Comments *')).toBeFalsy();
+  });
+
+  it('should show comments only after a category is selected', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+
+    expect(screen.getByLabelText('Comments *')).toBeTruthy();
+  });
+
+  it('should disable confirm when category is not selected', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+
+    expect(screen.getByRole('button', { name: 'Confirm Changes' })).toBeDisabled();
+  });
+
+  it('should disable confirm when comments are blank', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+
+    expect(screen.getByRole('button', { name: 'Confirm Changes' })).toBeDisabled();
+  });
+
+  it('should enable confirm when category is selected and comments entered', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+    await user.type(screen.getByLabelText('Comments *'), 'Updating filing type');
+
+    expect(screen.getByRole('button', { name: 'Confirm Changes' })).toBeEnabled();
+  });
+
+  it('should close modal on cancel', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByTestId('case-filing-type-modal')).toBeFalsy();
+  });
+
+  it('should update filing type, save comments, notify parent, and reload on success', async () => {
+    const user = userEvent.setup();
+    const onCaseFilingTypeUpdate = jest.fn();
+
+    updateExecutor.mockResolvedValue({});
+    commentsExecutor.mockResolvedValue({});
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={onCaseFilingTypeUpdate} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+    await user.type(screen.getByLabelText('Comments *'), 'Updating filing type');
+    await user.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+
+    await waitFor(() => {
+      expect(updateExecutor).toHaveBeenCalledWith({
+        data: {
+          caseFilingTypeCode: '562',
+        },
+      });
+    });
+
+    expect(commentsExecutor).toHaveBeenCalledWith({
+      data: {
+        caseNoteText: 'Updating filing type',
+        caseIdentifier: 123,
+      },
+    });
+
+    expect(onCaseFilingTypeUpdate).toHaveBeenCalledWith('562');
+    expect(mockReload).toHaveBeenCalled();
+  });
+
+  it('should show error banner when update fails', async () => {
+    const user = userEvent.setup();
+    const onCaseFilingTypeUpdate = jest.fn();
+
+    updateExecutor.mockRejectedValue(new Error('failed'));
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={onCaseFilingTypeUpdate} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+    await user.type(screen.getByLabelText('Comments *'), 'Updating filing type');
+    await user.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+
+    expect(await screen.findByText('Unable to update filing category. Please try again.')).toBeTruthy();
+    expect(onCaseFilingTypeUpdate).not.toHaveBeenCalled();
+    expect(mockReload).not.toHaveBeenCalled();
+  });
+
+  it('should show mount error banner when history load fails', () => {
+    setupUseAxios({
+      historyState: {
+        data: undefined,
+        error: new Error('history failed'),
+        loading: false,
+      },
+    });
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    expect(screen.getByText('Unable to load filing category history.')).toBeTruthy();
+  });
+
+  it('should show save error banner when saveError exists and bannerState is not error', () => {
+    setupUseAxios({
+      updateState: {
+        data: undefined,
+        error: new Error('save failed'),
+        loading: false,
+      },
+    });
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    expect(screen.getByText('Unable to update filing category.')).toBeTruthy();
+  });
+
+  it('should show loading message when history is loading', () => {
+    setupUseAxios({
+      historyState: {
+        data: undefined,
+        error: undefined,
+        loading: true,
+      },
+    });
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    expect(screen.getByText('Loading filing category history...')).toBeTruthy();
+  });
+
+  it('should fetch history when show history is clicked and history has not been loaded yet', async () => {
+    const user = userEvent.setup();
+    setupUseAxios({
+      historyState: {
+        data: undefined,
+        error: undefined,
+        loading: false,
+      },
+    });
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Show History' }));
+
+    expect(historyExecutor).toHaveBeenCalled();
+  });
+
+  it('should render history details when history exists and show history is clicked', async () => {
+    const user = userEvent.setup();
+
+    setupUseAxios({
+      historyState: {
+        data: [
+          {
+            filingCategoryDesc: 'Current Category',
+            sourceType: 'System',
+            createdBy: 'user1',
+            createdOn: '2026-01-01T10:00:00.000Z',
+          },
+          {
+            filingCategoryDesc: 'Older Category',
+            sourceType: 'Manual',
+            createdBy: 'user2',
+            createdOn: '2025-12-01T09:00:00.000Z',
+          },
+        ],
+        error: undefined,
+        loading: false,
+      },
+    });
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Show History' }));
+
+    expect(screen.getByTestId('details-content')).toBeTruthy();
+    expect(screen.getByText('Older Category')).toBeTruthy();
+    expect(screen.getByText(/user1 \| System \|/)).toBeTruthy();
+    expect(screen.getByText(/user2 \| Manual \|/)).toBeTruthy();
+  });
+
+  it('should disable filing category select when no allowed options remain', async () => {
+    const user = userEvent.setup();
+
+    mockUseCISCase.mockReturnValue({
+      caseId: 123,
+      caseFilingTypeCode: undefined,
+      caseFilingType: {
+        description: 'Unknown',
+      },
+    });
+
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+
+    expect(screen.getByLabelText('Filing Category')).toBeEnabled();
+  });
+
+  it('should early return and not save when caseId is missing', async () => {
+    const user = userEvent.setup();
+
+    mockUseCISCase.mockReturnValue({
+      caseId: undefined,
+      caseFilingTypeCode: '561',
+      caseFilingType: {
+        description: 'Refugee Travel Document - LPR In US',
+      },
+    });
+
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+    await user.type(screen.getByLabelText('Comments *'), 'Updating filing type');
+    await user.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+
+    expect(updateExecutor).not.toHaveBeenCalled();
+    expect(commentsExecutor).not.toHaveBeenCalled();
+  });
+
+  it('should clear old values when modal is reopened', async () => {
+    const user = userEvent.setup();
+    setupUseAxios();
+
+    render(<CaseFilingType onCaseFilingTypeUpdate={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.selectOptions(screen.getByLabelText('Filing Category'), '562');
+    await user.type(screen.getByLabelText('Comments *'), 'Temp comment');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+
+    expect(screen.getByLabelText('Filing Category')).toHaveValue('');
+    expect(screen.queryByLabelText('Comments *')).toBeFalsy();
+  });
+});
