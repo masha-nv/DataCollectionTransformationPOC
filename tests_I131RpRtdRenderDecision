@@ -1,0 +1,563 @@
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@uscis/elis/testing/library';
+import { I131RpRtdRenderDecision } from './i131-rp-rtd-render-decision';
+
+const mockUseAxios = jest.fn();
+const mockIsEqual = jest.fn();
+
+jest.mock('@uscis/elis/configuration', () => ({
+  __esModule: true,
+  useAxios: (...args: unknown[]) => mockUseAxios(...args),
+}));
+
+jest.mock('@uscis/elis/domain', () => ({
+  __esModule: true,
+  INTERNAL_APP: '/internal-app',
+}));
+
+jest.mock('lodash/isEqual', () => ({
+  __esModule: true,
+  default: (...args: unknown[]) => mockIsEqual(...args),
+}));
+
+jest.mock('./utils', () => ({
+  __esModule: true,
+  getTodaysDateFormatted: jest.fn(() => '01/01/2026'),
+  getValidityPeriodEndDateFormatted: jest.fn(() => '01/01/2027'),
+}));
+
+jest.mock('./admittance/i131-rp-rtd-rd-admittance', () => ({
+  __esModule: true,
+  ADMITTANCE_TYPES: {
+    PERMANENT_RESIDENT: 'Permanent Resident',
+    REFUGEE: 'Refugee',
+    ASYLEE: 'Asylee',
+  },
+  I131RpRtdRdAdmittance: ({
+    currentState,
+    readOnly,
+    onUpdate,
+  }: {
+    currentState: string;
+    readOnly: boolean;
+    onUpdate: (value: string) => void;
+  }) => (
+    <div data-testid="admittance-component">
+      <div>Admittance Current State: {currentState}</div>
+      <div>Admittance Read Only: {String(readOnly)}</div>
+      <button type="button" onClick={() => onUpdate('Asylee')}>
+        update-admittance
+      </button>
+    </div>
+  ),
+}));
+
+jest.mock('./mailing-address/i131-rp-rtd-rd-mailing-address', () => ({
+  __esModule: true,
+  I131RpRtdRdMailingAddress: ({
+    currentState,
+    readOnly,
+    USAddress,
+    onUpdate,
+    caseId,
+  }: {
+    currentState: unknown;
+    readOnly: boolean;
+    USAddress: unknown;
+    onUpdate: (value: unknown) => void;
+    caseId: number;
+  }) => (
+    <div data-testid="mailing-address-component">
+      <div>Mailing Read Only: {String(readOnly)}</div>
+      <div>Case Id: {caseId}</div>
+      <div data-testid="mailing-current-state">{JSON.stringify(currentState)}</div>
+      <div data-testid="mailing-us-address">{JSON.stringify(USAddress)}</div>
+      <button
+        type="button"
+        onClick={() =>
+          onUpdate({
+            sendToUSAddress: false,
+            contact: null,
+            consulate: 'Tokyo',
+          })
+        }
+      >
+        update-address
+      </button>
+      <button
+        type="button"
+        onClick={() => onUpdate(currentState)}
+      >
+        update-address-same
+      </button>
+    </div>
+  ),
+}));
+
+jest.mock('./validity-period/i131-rp-rtd-rd-validity-period', () => ({
+  __esModule: true,
+  VALIDITY_PERIOD_TYPE: {
+    ONE_YEAR: 1,
+  },
+  I131RpRtdRdValidityPeriodProps: ({
+    currentState,
+    readOnly,
+    isForReentryPermit,
+    onUpdate,
+  }: {
+    currentState: unknown;
+    readOnly: boolean;
+    isForReentryPermit: boolean;
+    onUpdate: (value: unknown) => void;
+  }) => (
+    <div data-testid="validity-period-component">
+      <div>Validity Read Only: {String(readOnly)}</div>
+      <div>Is For Reentry Permit: {String(isForReentryPermit)}</div>
+      <div data-testid="validity-current-state">{JSON.stringify(currentState)}</div>
+      <button
+        type="button"
+        onClick={() =>
+          onUpdate({
+            startValidity: '02/01/2026',
+            endValidity: '02/01/2027',
+            validityPeriodType: 1,
+            isValid: true,
+          })
+        }
+      >
+        update-validity
+      </button>
+      <button
+        type="button"
+        onClick={() => onUpdate(currentState)}
+      >
+        update-validity-same
+      </button>
+    </div>
+  ),
+}));
+
+describe('I131RpRtdRenderDecision', () => {
+  const baseCisCase = {
+    caseId: 12345,
+    caseFilingTypeCode: '563',
+  };
+
+  const contactDataResponse = {
+    fullName: 'Jane Doe',
+    contactDataWrapper: {
+      primaryAddressMailingId: 99,
+      primaryDaytimePhone: '111-222-3333',
+      primaryMobilePhone: '999-888-7777',
+      primaryEmail: 'jane@example.com',
+      contactDataList: [
+        {
+          contactIdentifier: 99,
+          address1: '123 Main St',
+          city: 'Atlanta',
+          state: 'GA',
+          zipCode: '30301',
+        },
+      ],
+    },
+  };
+
+  const setupUseAxios = ({
+    answers,
+    loadingResponses = false,
+    contactData = contactDataResponse,
+    loadingContactData = false,
+  }: {
+    answers: unknown[];
+    loadingResponses?: boolean;
+    contactData?: unknown;
+    loadingContactData?: boolean;
+  }) => {
+    mockUseAxios.mockReset();
+    mockUseAxios
+      .mockReturnValueOnce([{ data: answers, loading: loadingResponses }])
+      .mockReturnValueOnce([{ data: contactData, loading: loadingContactData }]);
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsEqual.mockImplementation((a, b) => JSON.stringify(a) === JSON.stringify(b));
+  });
+
+  it('should render nothing while decision data is not initialized', () => {
+    setupUseAxios({
+      answers: undefined as unknown as unknown[],
+      loadingResponses: true,
+      loadingContactData: true,
+    });
+
+    const { container } = render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={jest.fn()}
+        isReadOnly={false}
+      />
+    );
+
+    expect(container.firstChild).toBeFalsy();
+  });
+
+  it('should initialize with permanent resident for LPR case and US mailing address when response is yes', async () => {
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21526,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={{ ...baseCisCase, caseFilingTypeCode: '111' } as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    expect(await screen.findByTestId('mailing-address-component')).toBeTruthy();
+    expect(await screen.findByTestId('validity-period-component')).toBeTruthy();
+    expect(await screen.findByTestId('admittance-component')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      admittance: 'Permanent Resident',
+      mailingAddress: {
+        sendToUSAddress: true,
+        contact: {
+          mailingAddress: {
+            contactIdentifier: 99,
+            address1: '123 Main St',
+            city: 'Atlanta',
+            state: 'GA',
+            zipCode: '30301',
+          },
+          name: 'Jane Doe',
+          phone: '111-222-3333',
+          email: 'jane@example.com',
+        },
+      },
+      validityPeriod: {
+        endValidity: '01/01/2027',
+        startValidity: '01/01/2026',
+        validityPeriodType: 1,
+        isValid: true,
+      },
+    });
+
+    expect(screen.getByText('Admittance Current State: Permanent Resident')).toBeTruthy();
+  });
+
+  it('should initialize with empty admittance for non-LPR case and consulate field when response is not US', async () => {
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21529,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={{ ...baseCisCase, caseFilingTypeCode: '563' } as never}
+        onUpdate={onUpdate}
+        isReadOnly={true}
+      />
+    );
+
+    expect(await screen.findByTestId('mailing-address-component')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      admittance: '',
+      mailingAddress: {
+        sendToUSAddress: false,
+        contact: null,
+        consulate: '',
+      },
+      validityPeriod: {
+        endValidity: '01/01/2027',
+        startValidity: '01/01/2026',
+        validityPeriodType: 1,
+        isValid: true,
+      },
+    });
+
+    expect(screen.getByText('Admittance Read Only: true')).toBeTruthy();
+    expect(screen.getByText('Mailing Read Only: true')).toBeTruthy();
+    expect(screen.getByText('Validity Read Only: true')).toBeTruthy();
+    expect(screen.getByText('Is For Reentry Permit: true')).toBeTruthy();
+  });
+
+  it('should use mobile phone when daytime phone is missing', async () => {
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21526,
+          questionResponseCode: 'Y',
+        },
+      ],
+      contactData: {
+        ...contactDataResponse,
+        contactDataWrapper: {
+          ...contactDataResponse.contactDataWrapper,
+          primaryDaytimePhone: '',
+          primaryMobilePhone: '555-111-2222',
+        },
+      },
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={{ ...baseCisCase, caseFilingTypeCode: '111' } as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    await waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mailingAddress: expect.objectContaining({
+          contact: expect.objectContaining({
+            phone: '555-111-2222',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('should update mailing address and call onUpdate when mailing address changes', async () => {
+    const user = userEvent.setup();
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21529,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    await screen.findByTestId('mailing-address-component');
+    onUpdate.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'update-address' }));
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith({
+      admittance: '',
+      mailingAddress: {
+        sendToUSAddress: false,
+        contact: null,
+        consulate: 'Tokyo',
+      },
+      validityPeriod: {
+        endValidity: '01/01/2027',
+        startValidity: '01/01/2026',
+        validityPeriodType: 1,
+        isValid: true,
+      },
+    });
+  });
+
+  it('should not call onUpdate when mailing address does not change', async () => {
+    const user = userEvent.setup();
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21529,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    await screen.findByTestId('mailing-address-component');
+    onUpdate.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'update-address-same' }));
+
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('should update validity period and call onUpdate when validity changes', async () => {
+    const user = userEvent.setup();
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21529,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    await screen.findByTestId('validity-period-component');
+    onUpdate.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'update-validity' }));
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith({
+      admittance: '',
+      mailingAddress: {
+        sendToUSAddress: false,
+        contact: null,
+        consulate: '',
+      },
+      validityPeriod: {
+        startValidity: '02/01/2026',
+        endValidity: '02/01/2027',
+        validityPeriodType: 1,
+        isValid: true,
+      },
+    });
+  });
+
+  it('should not call onUpdate when validity period does not change', async () => {
+    const user = userEvent.setup();
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21529,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    await screen.findByTestId('validity-period-component');
+    onUpdate.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'update-validity-same' }));
+
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('should update admittance and call onUpdate when admittance changes', async () => {
+    const user = userEvent.setup();
+    const onUpdate = jest.fn();
+
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21529,
+          questionResponseCode: 'Y',
+        },
+      ],
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={onUpdate}
+        isReadOnly={false}
+      />
+    );
+
+    await screen.findByTestId('admittance-component');
+    onUpdate.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'update-admittance' }));
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith({
+      admittance: 'Asylee',
+      mailingAddress: {
+        sendToUSAddress: false,
+        contact: null,
+        consulate: '',
+      },
+      validityPeriod: {
+        endValidity: '01/01/2027',
+        startValidity: '01/01/2026',
+        validityPeriodType: 1,
+        isValid: true,
+      },
+    });
+  });
+
+  it('should not render child components until both axios calls are done', () => {
+    setupUseAxios({
+      answers: [
+        {
+          actualFormQuestionId: 21526,
+          questionResponseCode: 'Y',
+        },
+      ],
+      loadingResponses: false,
+      loadingContactData: true,
+    });
+
+    render(
+      <I131RpRtdRenderDecision
+        cisCase={baseCisCase as never}
+        onUpdate={jest.fn()}
+        isReadOnly={false}
+      />
+    );
+
+    expect(screen.queryByTestId('mailing-address-component')).toBeFalsy();
+    expect(screen.queryByTestId('validity-period-component')).toBeFalsy();
+    expect(screen.queryByTestId('admittance-component')).toBeFalsy();
+  });
+});
