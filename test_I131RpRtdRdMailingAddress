@@ -1,0 +1,315 @@
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@uscis/elis/testing/library';
+import { I131RpRtdRdMailingAddress } from './i131-rp-rtd-rd-mailing-address';
+
+jest.mock('@elis/react-beacon', () => {
+  const React = require('react');
+
+  return {
+    __esModule: true,
+    Label: ({
+      children,
+      htmlFor,
+      required,
+    }: {
+      children: React.ReactNode;
+      htmlFor?: string;
+      required?: boolean;
+    }) => (
+      <label htmlFor={htmlFor}>
+        {children}
+        {required ? ' *' : ''}
+      </label>
+    ),
+    Radio: ({
+      id,
+      children,
+      disabled,
+    }: {
+      id?: string;
+      children: React.ReactNode;
+      disabled?: boolean;
+    }) => (
+      <div data-testid={id} data-disabled={String(disabled)}>
+        {children}
+      </div>
+    ),
+    RadioOption: ({
+      id,
+      checked,
+      onChange,
+      children,
+    }: {
+      id?: string;
+      checked?: boolean;
+      onChange?: () => void;
+      children: React.ReactNode;
+    }) => (
+      <label htmlFor={id}>
+        <input
+          id={id}
+          type="radio"
+          checked={checked}
+          onChange={onChange}
+          readOnly={false}
+        />
+        {children}
+      </label>
+    ),
+  };
+});
+
+jest.mock('./applicant-or-rep-address', () => ({
+  __esModule: true,
+  ApplicantOrRepAddress: ({ contactData }: { contactData: unknown }) => (
+    <div data-testid="applicant-or-rep-address">{JSON.stringify(contactData)}</div>
+  ),
+}));
+
+jest.mock('./consulate-or-embassy-address', () => ({
+  __esModule: true,
+  ConsulateOrEmbassyAddress: ({
+    currentState,
+    readOnly,
+    onUpdate,
+  }: {
+    currentState: unknown;
+    readOnly: boolean;
+    onUpdate: (data: unknown) => void;
+  }) => (
+    <div data-testid="consulate-or-embassy-address">
+      <div>Read Only: {String(readOnly)}</div>
+      <div data-testid="foreign-current-state">{JSON.stringify(currentState)}</div>
+      <button
+        type="button"
+        onClick={() =>
+          onUpdate({
+            ...(currentState as Record<string, unknown>),
+            consulate: 'PRS',
+          })
+        }
+      >
+        update-foreign-address
+      </button>
+    </div>
+  ),
+}));
+
+describe('I131RpRtdRdMailingAddress', () => {
+  const usAddress = {
+    name: 'Jane Doe',
+    phone: '111-222-3333',
+    email: 'jane@example.com',
+    mailingAddress: {
+      streetAddress1Text: '123 Main St',
+      cityName: 'Atlanta',
+      stateCode: 'GA',
+      postalZipCode: '30301',
+      streetAddress2Text: '',
+      suiteApartmentNumber: '',
+      postalCode: '',
+      countryCode: 'USA',
+    },
+  };
+
+  const foreignState = {
+    sendToUSAddress: false,
+    contact: null,
+    consulate: 'LND',
+  };
+
+  const usState = {
+    sendToUSAddress: true,
+    contact: {
+      name: 'Old Name',
+      phone: '999',
+      email: 'old@example.com',
+      mailingAddress: {
+        streetAddress1Text: 'Old St',
+      },
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should render mailing address question and radio options', () => {
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={foreignState as never}
+        onUpdate={jest.fn()}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByText('Where is the Travel Document being sent? *')).toBeTruthy();
+    expect(screen.getByLabelText('U.S. Address')).toBeTruthy();
+    expect(screen.getByLabelText('Foreign Address')).toBeTruthy();
+  });
+
+  it('should render applicant or rep address when sendToUSAddress is true', () => {
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={usState as never}
+        onUpdate={jest.fn()}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByTestId('applicant-or-rep-address')).toBeTruthy();
+    expect(screen.queryByTestId('consulate-or-embassy-address')).toBeFalsy();
+    expect(screen.getByLabelText('U.S. Address')).toBeChecked();
+    expect(screen.getByLabelText('Foreign Address')).not.toBeChecked();
+  });
+
+  it('should render consulate or embassy address when sendToUSAddress is false', () => {
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={foreignState as never}
+        onUpdate={jest.fn()}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByTestId('consulate-or-embassy-address')).toBeTruthy();
+    expect(screen.queryByTestId('applicant-or-rep-address')).toBeFalsy();
+    expect(screen.getByLabelText('Foreign Address')).toBeChecked();
+    expect(screen.getByLabelText('U.S. Address')).not.toBeChecked();
+  });
+
+  it('should call onUpdate with US address and remove consulate when switching to US address', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={foreignState as never}
+        onUpdate={onUpdate}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    userEvent.click(screen.getByLabelText('U.S. Address'));
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith({
+      sendToUSAddress: true,
+      contact: usAddress,
+    });
+  });
+
+  it('should call onUpdate and keep existing state when switching to foreign address', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={usState as never}
+        onUpdate={onUpdate}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    userEvent.click(screen.getByLabelText('Foreign Address'));
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith({
+      sendToUSAddress: false,
+      contact: {
+        name: 'Old Name',
+        phone: '999',
+        email: 'old@example.com',
+        mailingAddress: {
+          streetAddress1Text: 'Old St',
+        },
+      },
+    });
+  });
+
+  it('should clone existing contact before updating when contact exists', () => {
+    const onUpdate = jest.fn();
+
+    const currentState = {
+      sendToUSAddress: false,
+      contact: {
+        name: 'Existing Name',
+        phone: '123',
+        email: 'existing@example.com',
+        mailingAddress: {
+          streetAddress1Text: 'Existing St',
+        },
+      },
+      consulate: 'ABC',
+    };
+
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={currentState as never}
+        onUpdate={onUpdate}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    userEvent.click(screen.getByLabelText('U.S. Address'));
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      sendToUSAddress: true,
+      contact: usAddress,
+    });
+
+    expect(currentState).toEqual({
+      sendToUSAddress: false,
+      contact: {
+        name: 'Existing Name',
+        phone: '123',
+        email: 'existing@example.com',
+        mailingAddress: {
+          streetAddress1Text: 'Existing St',
+        },
+      },
+      consulate: 'ABC',
+    });
+  });
+
+  it('should pass props through to consulate or embassy address', () => {
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={foreignState as never}
+        onUpdate={jest.fn()}
+        USAddress={usAddress as never}
+        readOnly={true}
+      />
+    );
+
+    expect(screen.getByText('Read Only: true')).toBeTruthy();
+    expect(screen.getByTestId('foreign-current-state')).toHaveTextContent('"consulate":"LND"');
+  });
+
+  it('should pass USAddress to applicant or rep address', () => {
+    render(
+      <I131RpRtdRdMailingAddress
+        caseId={123}
+        currentState={usState as never}
+        onUpdate={jest.fn()}
+        USAddress={usAddress as never}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByTestId('applicant-or-rep-address')).toHaveTextContent('Jane Doe');
+    expect(screen.getByTestId('applicant-or-rep-address')).toHaveTextContent('jane@example.com');
+  });
+});
