@@ -1,0 +1,1071 @@
+'use strict';
+describe('I-131 Case Review Functionality', function() {
+	let scope,
+	rootScope,
+	timeout,
+	locationMock,
+	q,
+	ctrl,
+	i131CaseReviewServiceMock,
+	I131_HP_CASE_REVIEW_UI_HEADER_MOCK,
+	I131_CAFRP_CASE_REVIEW_UI_HEADER_MOCK,
+	I131_DACA_CASE_REVIEW_UI_HEADER_MOCK,
+	I131_PIP_CASE_REVIEW_UI_HEADER_MOCK,
+	I131_RP_RTD_CASE_REVIEW_UI_HEADER_MOCK,
+	i485CaseReviewServiceMock,
+	biographicServicesMock,
+	worksheetStatusServiceMock,
+	focusHelperMock,
+	worksheetStatusDef,
+	uiHeaderDef,
+	toggleReviewedDef,
+	UtilHelperMock,
+	toggleServiceMock,
+	CASE_FILING_TYPE_MOCK = {I131_CFRP_FILING: 378, I131_OAW_REPAROLE: 414, I131_DOS_LES_PAROLE: 417, I131_UHP_REPAROLE: 473, I131_DACA_SWF: 487, I131_FRTF_RE_PAROLE: 490, I131_PIP_FILING_TYPES: ["491", "492", "493", "494", "495", "496", "497", "498"], I131_RP_RTD_FILING_TYPES: ["562", "563", "564", "565", "566"]},
+	featureEnabledDef,
+	uiHeaderQuestionsDef,
+	passportNumberDef,
+	stateParamsMock,
+	naturalizationServiceMock,
+	alienNumberServicesMock,
+	nameServicesMock,
+	dobServicesMock,
+	I131_HP_CASE_REVIEW_SUB_SECTION_CODE_MOCK,
+	SponsorServiceMock,
+	formConfigServiceMock,
+	BENEFIT_TYPE_DESCRIPTIONS_MOCK
+
+	const DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT = 'Basis justified per Secretary Mayorkas March 6, 2024 memo: '
+		+ 'Final Guidance for Parole and Re-Parole of Noncitizens for Purposes of Reunification Pursuant to the Ms. L. Class Action Lawsuit Settlement Agreement';
+
+	const I131_HP_FILING_TYPE_CD = '355';
+	const I131F_FILING_TYPE_CD = '485';
+
+	const I131F_NAV_SECTIONS = [{
+		title: 'Summary',
+		links: [
+			{
+				label: 'General Summary',
+				reviewText: 'Have you reviewed general flags completely?',
+				id: 1
+			},
+			{
+				label: 'Flags',
+				reviewText: 'Have you reviewed flags completely?',
+				id: 2
+			}]
+	},	
+	{
+		title: 'Close',
+		links: [		
+			{
+				label: 'Render Decision',
+				id: 3
+			}
+		]
+	}]
+	
+	function setUp(path, caseFilingTypeCode) {
+		module('i131Sponsor');
+		
+		locationMock = jasmine.createSpyObj('$location', ['path', 'search']);
+		locationMock.path.and.returnValue(path);
+		i131CaseReviewServiceMock = jasmine.createSpyObj('i131CaseReviewService', ['getWorksheetStatuses', 'getUIHeader', 'getAnalysisUIHeader', 'getUIHeaderForCAFRP', 'getUIHeaderForDACA', 'getNavItemsForI131F', 'getWorksheetStatusesForI131F']);
+		I131_HP_CASE_REVIEW_UI_HEADER_MOCK = {GENERAL_SUMMARY : 1, FLAGS : 2, PAROLE_REQUEST : 3, ANALYSIS : 4, ANALYSIS_OF_PAROLE_REASON : 5, THE_EXCERCISE_OF_DISCRETION : 6, RENDER_DECISION : 7};
+		I131_CAFRP_CASE_REVIEW_UI_HEADER_MOCK = {GENERAL_SUMMARY : 1, FLAGS : 2, CASE_LINKING : 3, PENDING_AND_PRIOR_CASES : 4, WORKSHEET : 5, NAMES_DOBS_CONTACTS : 6};
+		I131_DACA_CASE_REVIEW_UI_HEADER_MOCK = {GENERAL_SUMMARY : 1, FLAGS : 2, CASE_LINKING : 3, PENDING_AND_PRIOR_CASES : 4, WORKSHEET : 5, NAMES_DOBS_CONTACTS : 6};
+		I131_PIP_CASE_REVIEW_UI_HEADER_MOCK = {GENERAL_SUMMARY : 1, FLAGS : 2, CASE_LINKING : 3, PENDING_AND_PRIOR_CASES : 4, WORKSHEET : 5, NAMES_DOBS_CONTACTS : 6};
+		I131_RP_RTD_CASE_REVIEW_UI_HEADER_MOCK = {GENERAL_SUMMARY : 1, FLAGS : 2, CASE_LINKING : 3, PENDING_AND_PRIOR_CASES : 4, WORKSHEET : 5, NAMES_DOBS_CONTACTS : 6};
+		i485CaseReviewServiceMock = jasmine.createSpyObj('i485CaseReviewService', ['toggleReviewed']);
+		worksheetStatusServiceMock = jasmine.createSpyObj('worksheetStatusService', ['getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType', 'saveUIHeaderQuestionsByIdAndTaskIdAndCaseFilingType', 'setCisCase']);
+		focusHelperMock = jasmine.createSpyObj('focusHelper', ['setFocusToElement']);
+		toggleServiceMock = jasmine.createSpyObj('toggleService', ['isFeatureEnabled']);
+		biographicServicesMock = jasmine.createSpyObj('biographicServices',['getPassportData', 'getAllPersonCountriesOfBirthDTO']);
+		naturalizationServiceMock = jasmine.createSpyObj('naturalizationService',['getBiographics']);
+		alienNumberServicesMock = jasmine.createSpyObj('alienNumberServices',['getAlienNumbersWithHistory']);
+		nameServicesMock = jasmine.createSpyObj('nameServices',['getCasePersonNames']);
+		dobServicesMock = jasmine.createSpyObj('dobServices',['getDataList']);
+		SponsorServiceMock = jasmine.createSpyObj('SponsorService',['getCitizenshipInfo']);
+		formConfigServiceMock = jasmine.createSpyObj('formConfigService',['getFormConfigValue']);
+
+		I131_HP_CASE_REVIEW_SUB_SECTION_CODE_MOCK = {
+			REASON_PAROLE_REQUESTED: 532,
+			URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT: 1064,
+			URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON: 1065,
+		};
+		BENEFIT_TYPE_DESCRIPTIONS_MOCK = {
+			OTHER_OUTSIDE_ADVANCE_PAROLE : 25,
+			OTHER_OUTSIDE_INITIAL_PAROLE : 147,
+			OTHER_OUTSIDE_US_INITIAL_PAROLE_NO_PROGRAM : 149,
+			OTHER_INSIDE_US_INITIAL_PAROLE : 151,
+			OTHER_INSIDE_US_INITIAL_PAROLE_NO_PROGRAM : 153,
+			OTHER_INSIDE_US_NEW_PERIOD_OF_PAROLE : 155,
+			OTHER_INSIDE_US_NEW_PERIOD_OF_PAROLE_NO_PROGRAM : 157
+		}
+
+		module(function($provide) {
+			$provide.value('$location', locationMock);
+			$provide.value('i131CaseReviewService', i131CaseReviewServiceMock);
+			$provide.value('I131_HP_CASE_REVIEW_UI_HEADER', I131_HP_CASE_REVIEW_UI_HEADER_MOCK);
+			$provide.value('I131_CAFRP_CASE_REVIEW_UI_HEADER', I131_CAFRP_CASE_REVIEW_UI_HEADER_MOCK);
+			$provide.value('I131_DACA_CASE_REVIEW_UI_HEADER', I131_DACA_CASE_REVIEW_UI_HEADER_MOCK);
+			$provide.value('I131_PIP_CASE_REVIEW_UI_HEADER', I131_PIP_CASE_REVIEW_UI_HEADER_MOCK);
+			$provide.value('I131_RP_RTD_CASE_REVIEW_UI_HEADER', I131_RP_RTD_CASE_REVIEW_UI_HEADER_MOCK);
+			$provide.value('i485CaseReviewService', i485CaseReviewServiceMock);
+			$provide.value('UtilHelper', UtilHelperMock);
+			$provide.value('worksheetStatusService', worksheetStatusServiceMock);
+			$provide.value('focusHelper', focusHelperMock);
+			$provide.value('toggleService', toggleServiceMock);
+			$provide.value('I131_HP_CASE_REVIEW_SUB_SECTION_CODE', I131_HP_CASE_REVIEW_SUB_SECTION_CODE_MOCK);
+			$provide.value('biographicServices', biographicServicesMock);
+			$provide.value('$stateParams', stateParamsMock);
+			$provide.value('naturalizationService', naturalizationServiceMock);
+			$provide.value('alienNumberServices', alienNumberServicesMock);
+			$provide.value('nameServices', nameServicesMock);
+			$provide.value('dobServices', dobServicesMock);
+			$provide.value('SponsorService', SponsorServiceMock);
+			$provide.value('formConfigService', formConfigServiceMock);
+			$provide.value('BENEFIT_TYPE_DESCRIPTIONS', BENEFIT_TYPE_DESCRIPTIONS_MOCK);
+			$provide.value('CASE_FILING_TYPE_CODES', CASE_FILING_TYPE_MOCK);
+		});
+		
+		inject(function($rootScope, $q, $controller, $timeout){
+			
+			rootScope = $rootScope
+			rootScope.getPath = function(){};
+			scope = rootScope.$new();
+
+			scope.cisCase = {caseId : 1234,firstName: 'first', lastName: 'last', benefitType: 25, userTask: { id : 233}, caseFilingTypeCode: caseFilingTypeCode ? caseFilingTypeCode : 355, passportNumber: '327498273', beneficiaryPassportNumber: '53453455'};
+			timeout = $timeout;
+
+			if (I131F_FILING_TYPE_CD === caseFilingTypeCode) {
+				scope.cisCase.caseTypeName = 'I-131F';
+			}
+			
+			worksheetStatusDef = $q.defer();
+			uiHeaderDef = $q.defer();
+			toggleReviewedDef = $q.defer();
+			uiHeaderQuestionsDef = $q.defer();
+			featureEnabledDef = $q.defer();
+			passportNumberDef = $q.defer();
+			q = $q;
+			
+			i131CaseReviewServiceMock.getWorksheetStatuses.and.returnValue(worksheetStatusDef.promise);
+			i131CaseReviewServiceMock.getUIHeader.and.returnValue(uiHeaderDef.promise);
+			i131CaseReviewServiceMock.getUIHeaderForCAFRP.and.returnValue(uiHeaderDef.promise);
+			i131CaseReviewServiceMock.getUIHeaderForDACA.and.returnValue(uiHeaderDef.promise);
+			i131CaseReviewServiceMock.getAnalysisUIHeader.and.returnValue(uiHeaderDef.promise);
+			i485CaseReviewServiceMock.toggleReviewed.and.returnValue(toggleReviewedDef.promise);
+			worksheetStatusServiceMock.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType.and.returnValue(uiHeaderQuestionsDef.promise);
+			worksheetStatusServiceMock.saveUIHeaderQuestionsByIdAndTaskIdAndCaseFilingType.and.returnValue(uiHeaderQuestionsDef.promise);
+			toggleServiceMock.isFeatureEnabled.and.returnValue(featureEnabledDef.promise);
+			biographicServicesMock.getPassportData.and.returnValue(passportNumberDef.promise);
+
+			i131CaseReviewServiceMock.getNavItemsForI131F.and.returnValue(I131F_NAV_SECTIONS);
+			testUtils.resolveData(i131CaseReviewServiceMock.getWorksheetStatusesForI131F, [
+				{status: 'Yes', headerId: 1}, {status: 'No', headerId: 2}
+			])
+
+			testUtils.resolve(formConfigServiceMock.getFormConfigValue, true);
+			
+			ctrl = $controller('I131CaseReviewController', {
+				$scope: scope
+			});
+			
+			featureEnabledDef.resolve(true);
+			scope.$apply();
+		});
+	}
+
+	it('sets form config value after service call resolves', function() {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_CFRP_FILING)
+		expect(scope.shouldUseMultipleCobs).toBe(true);
+	});
+
+	it('should call I-131 CAFRP UI Header', () => {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_CFRP_FILING)
+		expect(i131CaseReviewServiceMock.getWorksheetStatuses).toHaveBeenCalledWith(1234);
+			
+		worksheetStatusDef.resolve({data : [{status: 'No', headerId: 1}, {status: 'Yes', headerId: 2} ]});
+		scope.$apply();
+
+		expect(i131CaseReviewServiceMock.getUIHeaderForCAFRP).toHaveBeenCalled();
+	});
+	
+	it('should call I-131 DACA UI Header', () => {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_DACA_SWF)
+		expect(i131CaseReviewServiceMock.getWorksheetStatuses).toHaveBeenCalledWith(1234);
+	});
+	
+	it('should call I-131 PIP Header', () => {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_PIP_FILING_TYPES[0])
+		expect(i131CaseReviewServiceMock.getWorksheetStatuses).toHaveBeenCalledWith(1234);
+	});
+	
+	it('should call I-131 RPRTD Header', () => {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_RP_RTD_FILING_TYPES[0])
+		expect(i131CaseReviewServiceMock.getWorksheetStatuses).toHaveBeenCalledWith(1234);
+	});
+	
+	it('should not run caseProcessingClockToggleEnabled for UHP ', function() {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_UHP_REPAROLE)
+		expect(scope.caseProcessingClockToggleEnabled).toBe(false);
+	});
+
+	it('should not run caseProcessingClockToggleEnabled for OAW ', function() {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_OAW_REPAROLE)
+		expect(scope.caseProcessingClockToggleEnabled).toBe(false);
+	});
+
+	it('should not run caseProcessingClockToggleEnabled for DOS LESS ', function() {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_DOS_LES_PAROLE)
+		expect(scope.caseProcessingClockToggleEnabled).toBe(false);
+	});
+
+	it('should not run caseProcessingClockToggleEnabled for CFRP ', function() {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_CFRP_FILING)
+		expect(scope.caseProcessingClockToggleEnabled).toBe(false);
+	});
+
+	it('should run caseProcessingClockToggleEnabled for HP ', function() {
+		setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', I131_HP_FILING_TYPE_CD)
+		expect(scope.caseProcessingClockToggleEnabled).toBe(true);
+	});
+	
+	describe('Non read-only functionality', function() {
+	
+		beforeEach(function() {
+			setUp('InternalApp/taskResolution/IOE0915094501/127/5017615')
+		});	
+		
+		it('should load the worksheet data', function() {
+			locationMock.search.and.returnValue({});
+			expect(i131CaseReviewServiceMock.getWorksheetStatuses).toHaveBeenCalledWith(1234);
+			
+			worksheetStatusDef.resolve({data : [{status: 'No', headerId: 1}, {status: 'Yes', headerId: 2} ]});
+			scope.$apply();
+			
+			expect(i131CaseReviewServiceMock.getUIHeader).toHaveBeenCalled();
+			uiHeaderDef.resolve({data : {id : 1, links : [{id : 2, links : [{id : 4}]},{id : 3, links : []}]}});
+			scope.$apply();
+			
+		expect(scope.navigationSections).toEqual([
+				{
+					id : 2, 
+					links : [{id : 4, visible : true, templatePath: undefined, reviewText: 'Please review the Analysis for this case.'}], 
+					templatePath: undefined,
+			    	reviewText: 'Review flags for this case.',
+			    	completed: true,
+			    	visible: true
+				},
+				{
+					id : 3, 
+					links : [],
+					visible : true
+				}]);
+	
+			expect(scope.appPetName).toEqual({lastName: 'last', firstName: 'first', middleName: undefined});
+	
+			expect(scope.navigation).toEqual({activeLink : {id : 4, visible : true, templatePath: undefined, reviewText: 'Please review the Analysis for this case.'}});
+	
+			expect(scope.readOnlyView).toBeFalsy();
+		});
+
+		it('should load a specific section when specified', function() {
+			locationMock.search.and.returnValue({link : 7});
+			worksheetStatusDef.resolve({data : [{status: 'No', headerId: 1}, {status: 'Yes', headerId: 2} ]});
+			scope.$apply();
+			
+			uiHeaderDef.resolve({data : {id : 1, links : [{id : 2, links : [{id : 4}]},{id : 3, links : [{id : 7}]}]}});
+			scope.$apply();
+			
+			expect(scope.navigationSections).toEqual([
+				{
+					id : 2, 
+					links : [{id : 4, visible : true, templatePath: undefined, reviewText: 'Please review the Analysis for this case.'}], 
+					templatePath: undefined,
+			    	reviewText: 'Review flags for this case.',
+			    	completed: true,
+			    	visible: true
+				},
+				{
+					id : 3, 
+					links : [{id : 7, visible : true, templatePath: undefined}],
+					visible : true
+				}]);
+	
+			expect(scope.navigation).toEqual({activeLink : {id : 7, visible : true, templatePath: undefined}});
+		});
+
+		it('should load the render decision section when specified', function() {
+			locationMock.search.and.returnValue({link : 'renderDecision'});
+			worksheetStatusDef.resolve({data : [{status: 'No', headerId: 1}, {status: 'Yes', headerId: 2} ]});
+			scope.$apply();
+			
+			uiHeaderDef.resolve({data : {id : 1, links : [{id : 2, links : [{id : 4}]},{id : 3, links : [{id : 7}]}]}});
+			scope.$apply();
+			
+			expect(scope.navigationSections).toEqual([
+				{
+					id : 2, 
+					links : [{id : 4, visible : true, templatePath: undefined, reviewText: 'Please review the Analysis for this case.'}], 
+					templatePath: undefined,
+			    	reviewText: 'Review flags for this case.',
+			    	completed: true,
+			    	visible: true
+				},
+				{
+					id : 3, 
+					links : [{id : 7, visible : true, templatePath: undefined}],
+					visible : true
+				}]);
+	
+			expect(scope.navigation).toEqual({activeLink : {id : 7, visible : true, templatePath: undefined}});
+		});
+		
+		it('should load person data', function() {
+			//const 1E_STRING = "I am outside the United States, and I am applying for an Advance Parole Document";
+			//const 1F_STRING = "I am applying for an Advance Parole Document for a person who is outside the United States";
+			
+			scope.cisCase.benefitType = 24;
+			scope.cisCase.personId = 'applicantId';
+			
+			scope.$apply();
+			
+			scope.load131Person();
+			
+			expect(scope.i131applicationType).toEqual('1E');
+			
+			scope.cisCase.benefitType = 25;
+			scope.cisCase.personId = 'applicantId';
+			scope.cisCase.beneficiaryId = 'beneId';
+			scope.cisCase.petitionerId = 'petId';
+			scope.i131Persons = [];
+			
+			scope.$apply();
+			scope.load131Person();
+			
+			expect(scope.i131applicationType).toEqual('1F');
+			
+		});
+		
+		it('should change current tab', function() {
+			scope.cisCase.sponsorIds = [];
+			scope.$apply();
+			
+			scope.changeCurrentTab('newPersonId');
+			
+			expect(scope.currentPerson).toEqual('newPersonId');
+		})
+		
+		it('should mark the section as reviewed', function() {
+			scope.navigation = {activeLink : {id : 4, visible : true, completed : false}};
+			
+			scope.updateReviewed(4, true);
+			
+			expect(i485CaseReviewServiceMock.toggleReviewed).toHaveBeenCalledWith(1234, 4, true)
+			toggleReviewedDef.resolve();
+			scope.$apply();
+			
+			expect(scope.navigation).toEqual({activeLink : {id : 4, visible : true, completed : true}});
+		});
+		
+		it('should determine if case is 1f and Petitioner or Applicant', function() {
+			expect(scope.is1f()).toEqual(true);
+			expect(scope.petOrBenHeader()).toEqual('Petitioner Summary')
+			
+			scope.cisCase.benefitType = 24;
+			scope.$apply();
+			
+			expect(scope.is1f()).toEqual(false);
+			expect(scope.petOrBenHeader()).toEqual('Applicant Summary')
+		});
+		
+		it('should retreive and organize the Analysis Question data', function() {
+			ctrl.getAnalysisQuestionData();
+			
+			expect(i131CaseReviewServiceMock.getAnalysisUIHeader).toHaveBeenCalled();
+			uiHeaderDef.resolve({
+				data : {
+					links : [
+						{
+							id : 1,
+							details : 'A'
+						},
+						{
+							id : 2,
+							details : 'B'
+						},
+						{
+							id : 3,
+							details : 'C'
+						}
+					]
+				}
+			});
+			scope.$apply();
+			
+			expect(worksheetStatusServiceMock.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType).toHaveBeenCalledWith(1234, 1, scope.cisCase.caseFilingTypeCode);
+			expect(worksheetStatusServiceMock.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType).toHaveBeenCalledWith(1234, 2, scope.cisCase.caseFilingTypeCode);
+			expect(worksheetStatusServiceMock.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType).toHaveBeenCalledWith(1234, 3, scope.cisCase.caseFilingTypeCode);
+			uiHeaderQuestionsDef.resolve({data : 'Some question data'});
+			scope.$apply();
+			
+			
+			expect(ctrl.links).toEqual([
+						{
+							id : 1,
+							details : 'A',
+							childQuestions : 'Some question data'
+						},
+						{
+							id : 2,
+							details : 'B',
+							childQuestions : 'Some question data'
+						},
+						{
+							id : 3,
+							details : 'C',
+							childQuestions : 'Some question data'
+						}
+					]);
+			expect(ctrl.analysisSections).toEqual({
+				1 : {id : 1, details : 'A', childQuestions : 'Some question data'},
+				2 : {id : 2, details : 'B', childQuestions : 'Some question data'},
+				3 : {id : 3, details : 'C', childQuestions : 'Some question data'}
+			});
+		});
+		
+		it('should retreive and organize the Analysis Question data - I131 PIP', function() {
+			scope.cisCase.caseFilingTypeCode = CASE_FILING_TYPE_MOCK.I131_PIP_FILING_TYPES[0];
+
+			ctrl.getAnalysisQuestionData();
+			
+			expect(i131CaseReviewServiceMock.getAnalysisUIHeader).toHaveBeenCalled();
+			uiHeaderDef.resolve({
+				data : {
+					links : [
+						{
+							id : 1,
+							details : 'A'
+						},
+					]
+				}
+			});
+			scope.$apply();
+			
+			expect(worksheetStatusServiceMock.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType).toHaveBeenCalledWith(1234, 1, scope.cisCase.caseFilingTypeCode);
+
+			uiHeaderQuestionsDef.resolve({data : [{ headerId: 3}, {childQuestions: ['test', 'test1', 'test2', 'test3', 'test4', 'test5', 'test6']}]});
+			scope.$apply();
+			
+			
+			expect(ctrl.analysisSections).toEqual({
+				1 : {id : 1, details : 'A', childQuestions : [{ headerId: 3}, {childQuestions: ['test', 'test1', 'test2', 'test3', 'test4', 'test6', 'test5']}]},
+			});
+		});
+		
+		it('should retreive and organize the Analysis Question data - Not PIP', function() {
+			ctrl.getAnalysisQuestionData();
+			
+			expect(i131CaseReviewServiceMock.getAnalysisUIHeader).toHaveBeenCalled();
+			uiHeaderDef.resolve({
+				data : {
+					links : [
+						{
+							id : 1,
+							details : 'A'
+						},
+					]
+				}
+			});
+			scope.$apply();
+			
+			expect(worksheetStatusServiceMock.getUIHeaderQuestionsByUIHeaderCodeAndCaseFilingType).toHaveBeenCalledWith(1234, 1, scope.cisCase.caseFilingTypeCode);
+
+			uiHeaderQuestionsDef.resolve({data : [{ headerId: 3}, {childQuestions: ['test', 'test1', 'test2', 'test3', 'test4', 'test5', 'test6']}]});
+			scope.$apply();
+			
+			
+			expect(ctrl.analysisSections).toEqual({
+				1 : {id : 1, details : 'A', childQuestions : [{ headerId: 3}, {childQuestions: ['test', 'test1', 'test2', 'test3', 'test4', 'test5', 'test6']}]},
+			});
+		});
+		
+		describe('Submitting Analysis Questions', function() {
+			beforeEach(function() {
+				ctrl.links = [
+					{
+						id : 3,
+						childQuestions : [
+							{
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											keyId : 529
+										},
+										childQuestions : []
+									},
+									{
+										subsectionCode : {
+											keyId : 530
+										},
+										childQuestions : []
+									},
+									{
+										subsectionCode : {
+											keyId : 532
+										},
+										subsectionCodeId: 532,
+										childQuestions : []
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 5,
+						childQuestions : [
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : []
+							},
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'Y'
+										},
+										responseCd : 'Y',
+										responseText : 'Test',
+										yes : true,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : 'Y',
+												responseText : 'Test',
+												yes : true,
+												childQuestions : []
+											}
+										]
+									},
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'N'
+										},
+										responseCd : 'Y',
+										responseText : 'Test',
+										yes : true,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : 'Y',
+												responseText : 'Test',
+												yes : true,
+												childQuestions : []
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 6,
+						childQuestions : [
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : []
+							}
+						]
+					}
+				]
+				ctrl.analysisSections = ctrl.links.reduce(function(map, obj) {
+					map[obj.id] = obj;
+					return map;
+				}, {});
+			});
+			
+			it('should do nothing if the form is invalid', function() {
+				ctrl.submitAnalysisQuestions(false);
+				expect(worksheetStatusServiceMock.saveUIHeaderQuestionsByIdAndTaskIdAndCaseFilingType).not.toHaveBeenCalled();
+			});
+			
+			it('should save the Analysis question responses if the form is valid', function() {
+				ctrl.submitAnalysisQuestions(true);
+				
+				expect(ctrl.links).toEqual([
+					{
+						id : 3,
+						childQuestions : [
+							{
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											keyId : 529
+										},
+										childQuestions : [],
+										responseCd : 'Y' 
+									},
+									{
+										subsectionCode : {
+											keyId : 530
+										},
+										childQuestions : [],
+										responseCd : null
+									},
+									{
+										subsectionCode : {
+											keyId : 532
+										},
+										subsectionCodeId: 532,
+										childQuestions : [],
+										responseCd : null
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 5,
+						childQuestions : [
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : []
+							},
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'Y'
+										},
+										responseCd : 'Y',
+										responseText : 'Test',
+										yes : true,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : 'Y',
+												responseText : 'Test',
+												yes : true,
+												childQuestions : []
+											}
+										]
+									},
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'N'
+										},
+										responseCd : null,
+										responseText : null,
+										yes : false,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : null,
+												responseText : null,
+												yes : false,
+												childQuestions : []
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 6,
+						childQuestions : [
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : []
+							}
+						]
+					}
+				]);
+				verifyAnalysisSave();
+			});
+			
+			it('should save the Analysis question responses if the form is valid - one "no" in B', function() {
+				ctrl.links[1].childQuestions[1].responseCd = 'N';
+				
+				ctrl.submitAnalysisQuestions(true);
+				
+				expect(ctrl.links).toEqual([
+					{
+						id : 3,
+						childQuestions : [
+							{
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											keyId : 529
+										},
+										childQuestions : [],
+										responseCd : 'Y' 
+									},
+									{
+										subsectionCode : {
+											keyId : 530
+										},
+										childQuestions : [],
+										responseCd : null
+									},
+									{
+										subsectionCode : {
+											keyId : 532
+										},
+										subsectionCodeId: 532,
+										childQuestions : [],
+										responseCd : null
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 5,
+						childQuestions : [
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : []
+							},
+							{
+								responseCd : 'N',
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'Y'
+										},
+										responseCd : null,
+										responseText : null,
+										yes : false,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : null,
+												responseText : null,
+												yes : false,
+												childQuestions : []
+											}
+										]
+									},
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'N'
+										},
+										responseCd : 'Y',
+										responseText : 'Test',
+										yes : true,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : 'Y',
+												responseText : 'Test',
+												yes : true,
+												childQuestions : []
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 6,
+						childQuestions : [
+							{
+								responseCd : 'Y',
+								subsectionCode : {},
+								childQuestions : []
+							}
+						]
+					}
+				]);
+				verifyAnalysisSave();
+			});
+			
+			it('should save the Analysis question responses if the form is valid - two "nos" in B', function() {
+				ctrl.links[1].childQuestions[0].responseCd = 'N';
+				ctrl.links[1].childQuestions[1].responseCd = 'N';
+				
+				ctrl.submitAnalysisQuestions(true);
+				
+				expect(ctrl.links).toEqual([
+					{
+						id : 3,
+						childQuestions : [
+							{
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											keyId : 529
+										},
+										childQuestions : [],
+										responseCd : 'Y' 
+									},
+									{
+										subsectionCode : {
+											keyId : 530
+										},
+										childQuestions : [],
+										responseCd : null
+									},
+									{
+										subsectionCode : {
+											keyId : 532
+										},
+										subsectionCodeId: 532,
+										childQuestions : [],
+										responseCd : null
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 5,
+						childQuestions : [
+							{
+								responseCd : 'N',
+								subsectionCode : {},
+								childQuestions : []
+							},
+							{
+								responseCd : 'N',
+								subsectionCode : {},
+								childQuestions : [
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'Y'
+										},
+										responseCd : null,
+										responseText : null,
+										yes : false,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : null,
+												responseText : null,
+												yes : false,
+												childQuestions : []
+											}
+										]
+									},
+									{
+										subsectionCode : {
+											showIfParentResponseIs : 'N'
+										},
+										responseCd : 'Y',
+										responseText : 'Test',
+										yes : true,
+										childQuestions : [
+											{
+												subsectionCode : {},
+												responseCd : 'Y',
+												responseText : 'Test',
+												yes : true,
+												childQuestions : []
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						id : 6,
+						childQuestions : [
+							{
+								responseCd : null,
+								responseText : null,
+								yes : false,
+								subsectionCode : {},
+								childQuestions : []
+							}
+						]
+					}
+				]);
+				verifyAnalysisSave();
+			});
+			
+			function verifyAnalysisSave() {
+				expect(worksheetStatusServiceMock.saveUIHeaderQuestionsByIdAndTaskIdAndCaseFilingType).toHaveBeenCalledWith(1234, 4, 233, ctrl.links, scope.cisCase.caseFilingTypeCode);
+				uiHeaderQuestionsDef.resolve();
+				scope.$apply();
+				
+				expect(ctrl.messages).toEqual([
+					{
+						type: 'success', 
+						text: 'Successfully saved the Analysis information', 
+						id: 'alertSection0'
+					}
+				]);
+				expect(focusHelperMock.setFocusToElement).not.toHaveBeenCalled();
+				timeout.flush();
+				
+				expect(focusHelperMock.setFocusToElement).toHaveBeenCalledWith('alertSection0');
+			}
+
+			it('should set the response code to "Y" when a checkbox is selected', function() {
+				let option = {
+					yes : false,
+					responseCd : null
+				}
+				
+				ctrl.updateCheckbox(option);
+				
+				expect(option.responseCd).toEqual('Y');
+			});
+
+			it('should nullify the response code when a checkbox is unselected', function() {
+				let option = {
+					yes : true,
+					responseCd : 'Y'
+				}
+				
+				ctrl.updateCheckbox(option);
+				
+				expect(option.responseCd).toEqual(null);
+			});
+
+		});
+	});
+	
+	describe('Read-only functionality', function() {
+		beforeEach(function() {
+			setUp('InternalApp/taskResolutionView/IOE0915094501/127/5017615')
+		});
+		
+		it('should correctly set the read-only attribute', function() {
+			expect(scope.readOnlyView).toBeTruthy();
+		});
+	});
+
+	describe('I-131F', () => {
+		beforeEach(() => {
+			setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', I131F_FILING_TYPE_CD);
+		});
+
+		it('should load i131f nav sections', () => {
+			scope.$digest();
+			expect(scope.navigationSections.length).toBe(2);
+			expect(scope.navigationSections.flatMap(navSections => navSections.links).find(n => n.id === 1).completed).toBe(true);
+		});
+	});
+
+	describe('isI131FRTFReParoleCase()', () => {
+		it('SHOULD return TRUE when cisCase CaseFilingTypeCode equals FRTF Re-Parole', () => {
+			scope.cisCase.caseFilingTypeCode = CASE_FILING_TYPE_MOCK.I131_FRTF_RE_PAROLE;
+			expect(ctrl.isI131FRTFReParoleCase()).toBeTrue();
+		});
+		it ('SHOULD return FALSE when cisCase CaseFilingTypeCode DOES NOT equal FRTF Re-Parole', () => {
+			scope.cisCase.caseFilingTypeCode = CASE_FILING_TYPE_MOCK.I131_OAW_REPAROLE;
+			expect(ctrl.isI131FRTFReParoleCase()).toBeFalse();
+		});
+	});
+
+	describe('setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification()', () => {
+		beforeEach(() => {
+			setUp('InternalApp/taskResolution/IOE0915094501/127/5017615', CASE_FILING_TYPE_MOCK.I131_FRTF_RE_PAROLE);
+			ctrl.analysisSections = {
+				5 : {
+					id: 5,
+					childQuestions: [
+						{
+							headerId: I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON,
+							subsectionCodeId: 1,
+							responseCd: 'Y',
+						},
+						{
+							headerId: I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON,
+							subsectionCodeId: I131_HP_CASE_REVIEW_SUB_SECTION_CODE_MOCK.URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT,
+							responseCd: 'Y',
+						},
+						{
+							headerId: I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON,
+							subsectionCodeId: I131_HP_CASE_REVIEW_SUB_SECTION_CODE_MOCK.URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON,
+							responseText: '',
+						},
+					],
+				},
+			};
+		});
+		it('SHOULD do nothing IF cisCase CaseFilingTypeCode IS NOT FRTF Re-Parole', () => {
+			scope.cisCase.caseFilingTypeCode = CASE_FILING_TYPE_MOCK.I131_OAW_REPAROLE;
+			ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+			expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toBeFalsy();
+		});
+		it('SHOULD do nothing IF given question IS NOT URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT', () => {
+			ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[0]);
+			expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toBeFalsy();
+		});
+		it('SHOULD do nothing IF URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON question IS NOT PRESENT', () => {
+			ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].subsectionCodeId = -1;
+			ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+			expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toBeFalsy();
+		});
+		describe('WHEN cisCase IS FRTF Re-Parole AND given question IS URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT AND URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON IS NOT UNDEFINED', () => {
+			describe("AND 'Y' IS the selected responseCd for URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT", () => {
+				beforeEach(() => {
+					ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1].responseCd = 'Y';
+				});
+				it("AND URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON questions responseText IS UNDEFINED SHOULD set responseText to default", () => {
+					ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText = undefined;
+					ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+					expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toEqual(DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT);
+				});
+				it("AND URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON questions responseText IS EMPTY SHOULD set responseText to default", () => {
+					ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+					expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toEqual(DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT);
+				});
+				it("AND URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON questions responseText IS NOT EMPTY OR UNDEFINED SHOULD NOT set responseText to default", () => {
+					ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText = 'Anything';
+					ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+					expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toEqual('Anything');
+				});
+			});
+			describe("AND 'Y' IS NOT the selected resopnseCd for URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT", () => {
+				beforeEach(() => {
+					ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1].responseCd = 'N';
+					ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+				});
+				it('AND URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON questions responseText EQUALS default SHOULD set responseText to blank', () => {
+					ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText = DEFAULT_I131_FRTF_URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_TEXT;
+					ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+					expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toBeFalsy();
+				});
+				it('AND URGENT_HUMANITARIAN_OR_PUBLIC_BENEFIT_JUSTIFICATION_REASON questions responseText DOES NOT EQUAL default SHOULD NOT set responseText to blank', () => {
+					ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText = 'Not Default Text';
+					ctrl.setDefaultForI131FRTFReParoleAnalysisOfParoleReasonJustification(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[1]);
+					expect(ctrl.analysisSections[I131_HP_CASE_REVIEW_UI_HEADER_MOCK.ANALYSIS_OF_PAROLE_REASON].childQuestions[2].responseText).toEqual('Not Default Text');
+				});
+			});
+		});
+	});
+
+	describe('isI131RPRTD()', () => {
+		it('SHOULD return TRUE when cisCase CaseFilingTypeCode equals RP', () => {
+			scope.cisCase.caseFilingTypeCode = CASE_FILING_TYPE_MOCK.I131_RP_RTD_FILING_TYPES.at(0);
+			expect(scope.isI131RPRTD()).toBeTrue();
+		});
+	});
+
+	
+
+
+});
