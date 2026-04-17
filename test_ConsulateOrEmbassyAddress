@@ -1,0 +1,213 @@
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@uscis/elis/testing/library';
+import { ConsulateOrEmbassyAddress } from './consulate-or-embassy-address';
+
+const mockUseRefData = jest.fn();
+
+jest.mock('@uscis/elis/state', () => ({
+  __esModule: true,
+  useRefData: () => mockUseRefData(),
+}));
+
+jest.mock('../i131-rp-rtd-rd.module.scss', () => ({
+  __esModule: true,
+  default: {
+    'normalize-select-size': 'normalize-select-size',
+  },
+}));
+
+jest.mock('@elis/react-beacon', () => {
+  const React = require('react');
+
+  return {
+    __esModule: true,
+    SelectSize: {
+      fill: 'fill',
+    },
+    Label: ({
+      children,
+      htmlFor,
+      required,
+    }: {
+      children: React.ReactNode;
+      htmlFor?: string;
+      required?: boolean;
+    }) => (
+      <label htmlFor={htmlFor}>
+        {children}
+        {required ? ' *' : ''}
+      </label>
+    ),
+    Select: ({
+      id,
+      value,
+      disabled,
+      onChange,
+      children,
+    }: {
+      id?: string;
+      value?: string;
+      disabled?: boolean;
+      onChange?: (evt: React.ChangeEvent<HTMLSelectElement>) => void;
+      children: React.ReactNode;
+    }) => (
+      <select
+        id={id}
+        data-testid={id}
+        value={value}
+        disabled={disabled}
+        onChange={onChange}
+      >
+        {children}
+      </select>
+    ),
+    SelectOption: ({
+      value,
+      children,
+    }: {
+      value: string;
+      children: React.ReactNode;
+    }) => <option value={value}>{children}</option>,
+  };
+});
+
+jest.mock('./modifiable-contact-block', () => ({
+  __esModule: true,
+  ModifiableContactBlock: ({
+    readOnly,
+    currentState,
+    onUpdate,
+  }: {
+    readOnly: boolean;
+    currentState: unknown;
+    onUpdate: (data: unknown) => void;
+  }) => (
+    <div data-testid="modifiable-contact-block">
+      <div>Read Only: {String(readOnly)}</div>
+      <div data-testid="modifiable-contact-block-state">{JSON.stringify(currentState)}</div>
+      <button
+        type="button"
+        onClick={() =>
+          onUpdate({
+            ...((currentState as Record<string, unknown>) || {}),
+            consulate: 'AMS',
+          })
+        }
+      >
+        update-contact-block
+      </button>
+    </div>
+  ),
+}));
+
+describe('ConsulateOrEmbassyAddress', () => {
+  const currentState = {
+    sendToUSAddress: false,
+    contact: null,
+    consulate: 'LND',
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseRefData.mockReturnValue({
+      consulate: [
+        { consulateCode: 'LND', consulateDesc: 'London' },
+        { consulateCode: 'PRS', consulateDesc: 'Paris' },
+        { consulateCode: 'TKY', consulateDesc: 'Tokyo' },
+      ],
+    });
+  });
+
+  it('should render consulate select, mailing label, and modifiable contact block', () => {
+    render(
+      <ConsulateOrEmbassyAddress
+        currentState={currentState}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Select Consulate Office *')).toBeTruthy();
+    expect(screen.getByText('Travel Document Mailing Address *')).toBeTruthy();
+    expect(screen.getByTestId('modifiable-contact-block')).toBeTruthy();
+  });
+
+  it('should render consulate options from ref data', () => {
+    render(
+      <ConsulateOrEmbassyAddress
+        currentState={currentState}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByRole('option', { name: 'London' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Paris' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Tokyo' })).toBeTruthy();
+    expect(screen.getByLabelText('Select Consulate Office *')).toHaveValue('LND');
+  });
+
+  it('should call onUpdate with updated consulate when selection changes', () => {
+    const onUpdate = jest.fn();
+
+    render(
+      <ConsulateOrEmbassyAddress
+        currentState={currentState}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    userEvent.selectOptions(screen.getByLabelText('Select Consulate Office *'), 'PRS');
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith({
+      sendToUSAddress: false,
+      contact: null,
+      consulate: 'PRS',
+    });
+  });
+
+  it('should disable consulate select when readOnly is true', () => {
+    render(
+      <ConsulateOrEmbassyAddress
+        currentState={currentState}
+        onUpdate={jest.fn()}
+        readOnly={true}
+      />
+    );
+
+    expect(screen.getByLabelText('Select Consulate Office *')).toBeDisabled();
+    expect(screen.getByText('Read Only: true')).toBeTruthy();
+  });
+
+  it('should pass props through to modifiable contact block', () => {
+    render(
+      <ConsulateOrEmbassyAddress
+        currentState={currentState}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByText('Read Only: false')).toBeTruthy();
+    expect(screen.getByTestId('modifiable-contact-block-state')).toHaveTextContent('"consulate":"LND"');
+  });
+
+  it('should handle missing ref data by rendering no options', () => {
+    mockUseRefData.mockReturnValue(undefined);
+
+    render(
+      <ConsulateOrEmbassyAddress
+        currentState={currentState}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Select Consulate Office *')).toBeTruthy();
+    expect(screen.queryByRole('option')).toBeFalsy();
+    expect(screen.getByTestId('modifiable-contact-block')).toBeTruthy();
+  });
+});
