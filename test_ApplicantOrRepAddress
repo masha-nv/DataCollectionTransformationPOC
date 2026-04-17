@@ -1,0 +1,57 @@
+import React from 'react';
+import { render, screen } from '@uscis/elis/testing/library';
+import { ApplicantOrRepAddress } from './applicant-or-rep-address';
+
+jest.mock('@elis/react-beacon', () => ({
+  __esModule: true,
+  Label: ({
+    children,
+    required,
+  }: {
+    children: React.ReactNode;
+    required?: boolean;
+  }) => <label>{children}{required ? ' *' : ''}</label>,
+}));
+
+jest.mock('./contact-block', () => ({
+  __esModule: true,
+  ContactBlock: ({ contactData }: { contactData: unknown }) => (
+    <div data-testid="contact-block">{JSON.stringify(contactData)}</div>
+  ),
+}));
+
+describe('ApplicantOrRepAddress', () => {
+  const mockContactData = {
+    name: 'Jane Doe',
+    phone: '111-222-3333',
+    email: 'jane@example.com',
+    mailingAddress: {
+      address1: '123 Main St',
+      city: 'Atlanta',
+      state: 'GA',
+      zipCode: '30301',
+    },
+  };
+
+  it('should render the required mailing address label', () => {
+    render(<ApplicantOrRepAddress contactData={mockContactData as never} />);
+
+    expect(screen.getByText('Travel Document Mailing Address *')).toBeTruthy();
+  });
+
+  it('should render contact block when contact data is provided', () => {
+    render(<ApplicantOrRepAddress contactData={mockContactData as never} />);
+
+    const contactBlock = screen.getByTestId('contact-block');
+    expect(contactBlock).toBeTruthy();
+    expect(contactBlock).toHaveTextContent('Jane Doe');
+    expect(contactBlock).toHaveTextContent('jane@example.com');
+  });
+
+  it('should not render contact block when contact data is null', () => {
+    render(<ApplicantOrRepAddress contactData={null as never} />);
+
+    expect(screen.getByText('Travel Document Mailing Address *')).toBeTruthy();
+    expect(screen.queryByTestId('contact-block')).toBeFalsy();
+  });
+});
