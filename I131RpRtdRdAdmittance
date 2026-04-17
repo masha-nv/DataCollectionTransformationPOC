@@ -1,0 +1,152 @@
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@uscis/elis/testing/library';
+import { I131RpRtdRdAdmittance, ADMITTANCE_TYPES } from './i131-rp-rtd-rd-admittance';
+
+jest.mock('../i131-rp-rtd-rd.module.scss', () => ({
+  __esModule: true,
+  default: {
+    'normalize-select-size': 'normalize-select-size',
+  },
+}));
+
+jest.mock('@elis/react-beacon', () => {
+  const React = require('react');
+
+  return {
+    __esModule: true,
+    SelectSize: {
+      small: 'small',
+    },
+    Label: ({ children, htmlFor, required }: { children: React.ReactNode; htmlFor?: string; required?: boolean }) => (
+      <label htmlFor={htmlFor}>
+        {children}
+        {required ? ' *' : ''}
+      </label>
+    ),
+    Select: ({
+      id,
+      value,
+      disabled,
+      onChange,
+      children,
+    }: {
+      id?: string;
+      value?: string;
+      disabled?: boolean;
+      onChange?: (e: React.ChangeEvent<HTMLSelectElement>, value: { value: string }) => void;
+      children: React.ReactNode;
+    }) => (
+      <select
+        id={id}
+        data-testid={id}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e, { value: e.target.value })}
+      >
+        {children}
+      </select>
+    ),
+    SelectOption: ({
+      value,
+      children,
+    }: {
+      value: string;
+      children: React.ReactNode;
+    }) => <option value={value}>{children}</option>,
+    TextInput: ({
+      id,
+      value,
+      disabled,
+    }: {
+      id?: string;
+      value?: string;
+      disabled?: boolean;
+    }) => <input id={id} value={value} disabled={disabled} readOnly />,
+  };
+});
+
+describe('I131RpRtdRdAdmittance', () => {
+  it('should render admittance, restrictions, and entries fields', () => {
+    render(
+      <I131RpRtdRdAdmittance
+        onUpdate={jest.fn()}
+        currentState={ADMITTANCE_TYPES.REFUGEE}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Admittance *')).toBeTruthy();
+    expect(screen.getByLabelText('Restrictions')).toBeTruthy();
+    expect(screen.getByLabelText('Entries')).toBeTruthy();
+
+    expect(screen.getByLabelText('Restrictions')).toHaveValue('NONE');
+    expect(screen.getByLabelText('Entries')).toHaveValue('M');
+
+    expect(screen.getByLabelText('Restrictions')).toBeDisabled();
+    expect(screen.getByLabelText('Entries')).toBeDisabled();
+  });
+
+  it('should render refugee and asylee options when current state is not permanent resident', () => {
+    render(
+      <I131RpRtdRdAdmittance
+        onUpdate={jest.fn()}
+        currentState={ADMITTANCE_TYPES.REFUGEE}
+        readOnly={false}
+      />
+    );
+
+    const select = screen.getByLabelText('Admittance *');
+    expect(select).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Refugee' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Asylee' })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'Permanent Resident' })).toBeFalsy();
+    expect(select).not.toBeDisabled();
+  });
+
+  it('should render permanent resident option and disable select when current state is permanent resident', () => {
+    render(
+      <I131RpRtdRdAdmittance
+        onUpdate={jest.fn()}
+        currentState={ADMITTANCE_TYPES.PERMANENT_RESIDENT}
+        readOnly={false}
+      />
+    );
+
+    const select = screen.getByLabelText('Admittance *');
+    expect(select).toBeDisabled();
+    expect(screen.getByRole('option', { name: 'Permanent Resident' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Refugee' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Asylee' })).toBeTruthy();
+    expect(select).toHaveValue(ADMITTANCE_TYPES.PERMANENT_RESIDENT);
+  });
+
+  it('should disable select when readOnly is true', () => {
+    render(
+      <I131RpRtdRdAdmittance
+        onUpdate={jest.fn()}
+        currentState={ADMITTANCE_TYPES.ASYLEE}
+        readOnly={true}
+      />
+    );
+
+    expect(screen.getByLabelText('Admittance *')).toBeDisabled();
+  });
+
+  it('should call onUpdate when admittance selection changes', async () => {
+    const user = userEvent.setup();
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdAdmittance
+        onUpdate={onUpdate}
+        currentState={ADMITTANCE_TYPES.REFUGEE}
+        readOnly={false}
+      />
+    );
+
+    await user.selectOptions(screen.getByLabelText('Admittance *'), ADMITTANCE_TYPES.ASYLEE);
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith(ADMITTANCE_TYPES.ASYLEE);
+  });
+});
