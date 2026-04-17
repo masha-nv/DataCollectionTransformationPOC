@@ -1,0 +1,970 @@
+        at runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:475:34)
+        at TestRunner.runTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/index.js:101:12)
+        at TestScheduler.scheduleTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+        at runJest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/runJest.js:404:19)
+        at _run10000 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:320:7)
+        at runCLI (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:173:3)
+        at Object.run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest/node_modules/jest-cli/build/cli/index.js:155:37)
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at VirtualConsole.<anonymous> (../../../node_modules/jsdom/lib/jsdom/virtual-console.js:29:45)
+      at reportException (../../../node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:70:28)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.error
+    The above error occurred in the <I131RpRtdRenderDecision> component:
+    
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:42:3)
+    
+    Consider adding an error boundary to your tree to customize error handling behavior.
+    Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at logCapturedError (../../../node_modules/react-dom/cjs/react-dom.development.js:20085:23)
+      at update.callback (../../../node_modules/react-dom/cjs/react-dom.development.js:20118:5)
+      at callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:12318:12)
+      at commitUpdateQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:12339:9)
+      at commitLifeCycles (../../../node_modules/react-dom/cjs/react-dom.development.js:20736:11)
+      at commitLayoutEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23426:7)
+
+  console.error
+    Error: Uncaught [TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))]
+        at reportException (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:66:24)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12) TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+        at renderWithHooks (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+        at updateFunctionComponent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+        at beginWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+        at HTMLUnknownElement.callCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+        at HTMLUnknownElement.callTheUserObjectsOperation (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+        at workLoopSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+        at renderRootSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+        at performSyncWorkOnRoot (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+        at /Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11327:26
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushSyncCallbackQueueImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+        at flushSyncCallbackQueue (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+        at flushPassiveEffectsImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushPassiveEffects (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+        at Object.<anonymous>.flushWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+        at act (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+        at render (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@testing-library/react/dist/pure.js:95:26)
+        at customRender (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/testing/src/testing-library/custom-queries.ts:134:3)
+        at Object.<anonymous> (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:364:5)
+        at Promise.then.completed (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:391:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:316:10)
+        at _callCircusTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:218:40)
+        at _runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:155:3)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:66:9)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:60:9)
+        at run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:25:3)
+        at runAndTransformResultsToJestFormat (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+        at jestAdapter (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+        at runTestInternal (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:389:16)
+        at runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:475:34)
+        at TestRunner.runTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/index.js:101:12)
+        at TestScheduler.scheduleTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+        at runJest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/runJest.js:404:19)
+        at _run10000 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:320:7)
+        at runCLI (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:173:3)
+        at Object.run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest/node_modules/jest-cli/build/cli/index.js:155:37)
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at VirtualConsole.<anonymous> (../../../node_modules/jsdom/lib/jsdom/virtual-console.js:29:45)
+      at reportException (../../../node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:70:28)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.error
+    The above error occurred in the <I131RpRtdRenderDecision> component:
+    
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:42:3)
+    
+    Consider adding an error boundary to your tree to customize error handling behavior.
+    Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at logCapturedError (../../../node_modules/react-dom/cjs/react-dom.development.js:20085:23)
+      at update.callback (../../../node_modules/react-dom/cjs/react-dom.development.js:20118:5)
+      at callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:12318:12)
+      at commitUpdateQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:12339:9)
+      at commitLifeCycles (../../../node_modules/react-dom/cjs/react-dom.development.js:20736:11)
+      at commitLayoutEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23426:7)
+
+  console.error
+    Error: Uncaught [TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))]
+        at reportException (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:66:24)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12) TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+        at renderWithHooks (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+        at updateFunctionComponent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+        at beginWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+        at HTMLUnknownElement.callCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+        at HTMLUnknownElement.callTheUserObjectsOperation (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+        at workLoopSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+        at renderRootSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+        at performSyncWorkOnRoot (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+        at /Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11327:26
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushSyncCallbackQueueImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+        at flushSyncCallbackQueue (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+        at flushPassiveEffectsImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushPassiveEffects (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+        at Object.<anonymous>.flushWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+        at act (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+        at render (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@testing-library/react/dist/pure.js:95:26)
+        at customRender (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/testing/src/testing-library/custom-queries.ts:134:3)
+        at Object.<anonymous> (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:406:5)
+        at Promise.then.completed (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:391:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:316:10)
+        at _callCircusTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:218:40)
+        at _runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:155:3)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:66:9)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:60:9)
+        at run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:25:3)
+        at runAndTransformResultsToJestFormat (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+        at jestAdapter (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+        at runTestInternal (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:389:16)
+        at runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:475:34)
+        at TestRunner.runTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/index.js:101:12)
+        at TestScheduler.scheduleTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+        at runJest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/runJest.js:404:19)
+        at _run10000 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:320:7)
+        at runCLI (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:173:3)
+        at Object.run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest/node_modules/jest-cli/build/cli/index.js:155:37)
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at VirtualConsole.<anonymous> (../../../node_modules/jsdom/lib/jsdom/virtual-console.js:29:45)
+      at reportException (../../../node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:70:28)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.error
+    The above error occurred in the <I131RpRtdRenderDecision> component:
+    
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:42:3)
+    
+    Consider adding an error boundary to your tree to customize error handling behavior.
+    Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at logCapturedError (../../../node_modules/react-dom/cjs/react-dom.development.js:20085:23)
+      at update.callback (../../../node_modules/react-dom/cjs/react-dom.development.js:20118:5)
+      at callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:12318:12)
+      at commitUpdateQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:12339:9)
+      at commitLifeCycles (../../../node_modules/react-dom/cjs/react-dom.development.js:20736:11)
+      at commitLayoutEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23426:7)
+
+  console.error
+    Error: Uncaught [TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))]
+        at reportException (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:66:24)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12) TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+        at renderWithHooks (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+        at updateFunctionComponent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+        at beginWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+        at HTMLUnknownElement.callCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+        at HTMLUnknownElement.callTheUserObjectsOperation (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+        at workLoopSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+        at renderRootSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+        at performSyncWorkOnRoot (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+        at /Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11327:26
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushSyncCallbackQueueImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+        at flushSyncCallbackQueue (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+        at flushPassiveEffectsImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushPassiveEffects (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+        at Object.<anonymous>.flushWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+        at act (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+        at render (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@testing-library/react/dist/pure.js:95:26)
+        at customRender (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/testing/src/testing-library/custom-queries.ts:134:3)
+        at Object.<anonymous> (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:434:5)
+        at Promise.then.completed (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:391:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:316:10)
+        at _callCircusTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:218:40)
+        at _runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:155:3)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:66:9)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:60:9)
+        at run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:25:3)
+        at runAndTransformResultsToJestFormat (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+        at jestAdapter (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+        at runTestInternal (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:389:16)
+        at runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:475:34)
+        at TestRunner.runTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/index.js:101:12)
+        at TestScheduler.scheduleTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+        at runJest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/runJest.js:404:19)
+        at _run10000 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:320:7)
+        at runCLI (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:173:3)
+        at Object.run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest/node_modules/jest-cli/build/cli/index.js:155:37)
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at VirtualConsole.<anonymous> (../../../node_modules/jsdom/lib/jsdom/virtual-console.js:29:45)
+      at reportException (../../../node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:70:28)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.error
+    The above error occurred in the <I131RpRtdRenderDecision> component:
+    
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:42:3)
+    
+    Consider adding an error boundary to your tree to customize error handling behavior.
+    Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at logCapturedError (../../../node_modules/react-dom/cjs/react-dom.development.js:20085:23)
+      at update.callback (../../../node_modules/react-dom/cjs/react-dom.development.js:20118:5)
+      at callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:12318:12)
+      at commitUpdateQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:12339:9)
+      at commitLifeCycles (../../../node_modules/react-dom/cjs/react-dom.development.js:20736:11)
+      at commitLayoutEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23426:7)
+
+  console.error
+    Error: Uncaught [TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))]
+        at reportException (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:66:24)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12) TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+        at renderWithHooks (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+        at updateFunctionComponent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+        at beginWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+        at HTMLUnknownElement.callCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+        at HTMLUnknownElement.callTheUserObjectsOperation (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+        at workLoopSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+        at renderRootSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+        at performSyncWorkOnRoot (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+        at /Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11327:26
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushSyncCallbackQueueImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+        at flushSyncCallbackQueue (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+        at flushPassiveEffectsImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushPassiveEffects (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+        at Object.<anonymous>.flushWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+        at act (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+        at render (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@testing-library/react/dist/pure.js:95:26)
+        at customRender (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/testing/src/testing-library/custom-queries.ts:134:3)
+        at Object.<anonymous> (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:476:5)
+        at Promise.then.completed (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:391:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:316:10)
+        at _callCircusTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:218:40)
+        at _runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:155:3)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:66:9)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:60:9)
+        at run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:25:3)
+        at runAndTransformResultsToJestFormat (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+        at jestAdapter (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+        at runTestInternal (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:389:16)
+        at runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:475:34)
+        at TestRunner.runTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/index.js:101:12)
+        at TestScheduler.scheduleTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+        at runJest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/runJest.js:404:19)
+        at _run10000 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:320:7)
+        at runCLI (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:173:3)
+        at Object.run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest/node_modules/jest-cli/build/cli/index.js:155:37)
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at VirtualConsole.<anonymous> (../../../node_modules/jsdom/lib/jsdom/virtual-console.js:29:45)
+      at reportException (../../../node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:70:28)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.error
+    The above error occurred in the <I131RpRtdRenderDecision> component:
+    
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:42:3)
+    
+    Consider adding an error boundary to your tree to customize error handling behavior.
+    Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at logCapturedError (../../../node_modules/react-dom/cjs/react-dom.development.js:20085:23)
+      at update.callback (../../../node_modules/react-dom/cjs/react-dom.development.js:20118:5)
+      at callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:12318:12)
+      at commitUpdateQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:12339:9)
+      at commitLifeCycles (../../../node_modules/react-dom/cjs/react-dom.development.js:20736:11)
+      at commitLayoutEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23426:7)
+
+  console.error
+    Error: Uncaught [TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))]
+        at reportException (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:66:24)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12) TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+        at renderWithHooks (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+        at updateFunctionComponent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+        at beginWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+        at HTMLUnknownElement.callCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+        at HTMLUnknownElement.callTheUserObjectsOperation (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+        at innerInvokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+        at invokeEventListeners (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+        at HTMLUnknownElementImpl._dispatch (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+        at HTMLUnknownElementImpl.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+        at HTMLUnknownElement.dispatchEvent (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+        at Object.invokeGuardedCallbackDev (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+        at invokeGuardedCallback (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+        at beginWork$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+        at performUnitOfWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+        at workLoopSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+        at renderRootSync (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+        at performSyncWorkOnRoot (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+        at /Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11327:26
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushSyncCallbackQueueImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+        at flushSyncCallbackQueue (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+        at flushPassiveEffectsImpl (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+        at unstable_runWithPriority (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/scheduler/cjs/scheduler.development.js:468:12)
+        at runWithPriority$1 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+        at flushPassiveEffects (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+        at Object.<anonymous>.flushWork (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+        at act (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+        at render (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@testing-library/react/dist/pure.js:95:26)
+        at customRender (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/testing/src/testing-library/custom-queries.ts:134:3)
+        at Object.<anonymous> (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:504:5)
+        at Promise.then.completed (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:391:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/utils.js:316:10)
+        at _callCircusTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:218:40)
+        at _runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:155:3)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:66:9)
+        at _runTestsForDescribeBlock (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:60:9)
+        at run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/run.js:25:3)
+        at runAndTransformResultsToJestFormat (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+        at jestAdapter (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+        at runTestInternal (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:389:16)
+        at runTest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/runTest.js:475:34)
+        at TestRunner.runTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest-runner/build/index.js:101:12)
+        at TestScheduler.scheduleTests (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/TestScheduler.js:333:13)
+        at runJest (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/runJest.js:404:19)
+        at _run10000 (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:320:7)
+        at runCLI (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/@jest/core/build/cli/index.js:173:3)
+        at Object.run (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/node_modules/jest/node_modules/jest-cli/build/cli/index.js:155:37)
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at VirtualConsole.<anonymous> (../../../node_modules/jsdom/lib/jsdom/virtual-console.js:29:45)
+      at reportException (../../../node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:70:28)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:341:9)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.error
+    The above error occurred in the <I131RpRtdRenderDecision> component:
+    
+        at I131RpRtdRenderDecision (/Users/mbagirov/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision/src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:42:3)
+    
+    Consider adding an error boundary to your tree to customize error handling behavior.
+    Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+      22 |     hasActError = true;
+      23 |   }
+    > 24 |   _error.apply(console, args);
+         |          ^
+      25 | };
+      26 |
+      27 | beforeEach(() => {
+
+      at console.Object.<anonymous>.console.error (../testing/src/lib/setup-test-env.ts:24:10)
+      at logCapturedError (../../../node_modules/react-dom/cjs/react-dom.development.js:20085:23)
+      at update.callback (../../../node_modules/react-dom/cjs/react-dom.development.js:20118:5)
+      at callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:12318:12)
+      at commitUpdateQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:12339:9)
+      at commitLifeCycles (../../../node_modules/react-dom/cjs/react-dom.development.js:20736:11)
+      at commitLayoutEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23426:7)
+
+ FAIL   elis-render-decision  src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx
+  I131RpRtdRenderDecision
+    ✓ should render nothing while decision data is not initialized (7 ms)
+    ✕ should initialize with permanent resident for LPR case and US mailing address when response is yes (55 ms)
+    ✕ should initialize with empty admittance for non-LPR case and consulate field when response is not US (6 ms)
+    ✕ should use mobile phone when daytime phone is missing (5 ms)
+    ✕ should update mailing address and call onUpdate when mailing address changes (6 ms)
+    ✕ should not call onUpdate when mailing address does not change (5 ms)
+    ✕ should update validity period and call onUpdate when validity changes (4 ms)
+    ✕ should not call onUpdate when validity period does not change (4 ms)
+    ✕ should update admittance and call onUpdate when admittance changes (5 ms)
+    ✓ should not render child components until both axios calls are done (3 ms)
+
+  ● I131RpRtdRenderDecision › should initialize with permanent resident for LPR case and US mailing address when response is yes
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:218:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should initialize with empty admittance for non-LPR case and consulate field when response is not US
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:274:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should use mobile phone when daytime phone is missing
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:329:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should update mailing address and call onUpdate when mailing address changes
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:364:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should not call onUpdate when mailing address does not change
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:406:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should update validity period and call onUpdate when validity changes
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:434:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should not call onUpdate when validity period does not change
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:476:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+  ● I131RpRtdRenderDecision › should update admittance and call onUpdate when admittance changes
+
+    TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+
+      44 |   const NONLRPCaseFilingTypeCodes = ["563", "564"]
+      45 |   const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+    > 46 |   const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+         |                                                                ^
+      47 |     `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+      48 |     {useCache: false}
+      49 |   );
+
+      at I131RpRtdRenderDecision (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.tsx:46:64)
+      at renderWithHooks (../../../node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateFunctionComponent (../../../node_modules/react-dom/cjs/react-dom.development.js:17356:20)
+      at beginWork (../../../node_modules/react-dom/cjs/react-dom.development.js:19063:16)
+      at HTMLUnknownElement.callCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (../../../node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (../../../node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (../../../node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (../../../node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (../../../node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (../../../node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (../../../node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at ../../../node_modules/react-dom/cjs/react-dom.development.js:11327:26
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushSyncCallbackQueueImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:11322:9)
+      at flushSyncCallbackQueue (../../../node_modules/react-dom/cjs/react-dom.development.js:11309:3)
+      at flushPassiveEffectsImpl (../../../node_modules/react-dom/cjs/react-dom.development.js:23620:3)
+      at unstable_runWithPriority (../../../node_modules/scheduler/cjs/scheduler.development.js:468:12)
+      at runWithPriority$1 (../../../node_modules/react-dom/cjs/react-dom.development.js:11276:10)
+      at flushPassiveEffects (../../../node_modules/react-dom/cjs/react-dom.development.js:23447:14)
+      at Object.<anonymous>.flushWork (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:992:10)
+      at act (../../../node_modules/react-dom/cjs/react-dom-test-utils.development.js:1107:9)
+      at render (../../../node_modules/@testing-library/react/dist/pure.js:95:26)
+      at customRender (../testing/src/testing-library/custom-queries.ts:134:3)
+      at Object.<anonymous> (src/lib/i131-rp-rtd-render-decision/i131-rp-rtd-render-decision.spec.tsx:504:5)
+      at TestScheduler.scheduleTests (../../../node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../../../node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../../../node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../../../node_modules/@jest/core/build/cli/index.js:173:3)
+
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 2 passed, 10 total
+Snapshots:   0 total
+Time:        1.838 s, estimated 2 s
+Ran all test suites matching /\/Users\/mbagirov\/elis\/apps\/InternalApp\/InternalAppFrontend\/libs\/elis\/render-decision\/src\/lib\/i131-rp-rtd-render-decision\/i131-rp-rtd-render-decision\.spec\.tsx/i with tests matching "I131RpRtdRenderDecision".
+
+⚫️ [1:05] ~/elis/apps/InternalApp/InternalAppFrontend/libs/elis/render-decision (Scorpion-162196-frontend) [jdk-8] [1.3.154] [v24.11.1] 
+▶ 
