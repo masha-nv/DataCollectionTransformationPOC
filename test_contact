@@ -1,0 +1,106 @@
+import React from 'react';
+import { render, screen } from '@uscis/elis/testing/library';
+import { ContactBlock } from './contact-block';
+
+describe('ContactBlock', () => {
+  const baseContactData = {
+    name: 'Jane Doe',
+    phone: '111-222-3333',
+    email: 'jane@example.com',
+    mailingAddress: {
+      streetAddress1Text: '123 Main St',
+      streetAddress2Text: 'Apt 4',
+      suiteApartmentNumber: 'Suite 200',
+      cityName: 'Atlanta',
+      stateCode: 'GA',
+      postalZipCode: '30301',
+      postalCode: '',
+      countryCode: 'USA',
+    },
+  };
+
+  it('should render all fields when all data is provided', () => {
+    render(<ContactBlock contactData={baseContactData as never} />);
+
+    expect(screen.getByText('Jane Doe')).toBeTruthy();
+    expect(screen.getByText('123 Main St')).toBeTruthy();
+    expect(screen.getByText('Apt 4')).toBeTruthy();
+    expect(screen.getByText('Suite 200')).toBeTruthy();
+    expect(screen.getByText('Atlanta')).toBeTruthy();
+    expect(screen.getByText('GA')).toBeTruthy();
+    expect(screen.getByText('30301')).toBeTruthy();
+    expect(screen.getByText('USA')).toBeTruthy();
+    expect(screen.getByText('111-222-3333')).toBeTruthy();
+    expect(screen.getByText('jane@example.com')).toBeTruthy();
+  });
+
+  it('should not render optional fields when they are missing', () => {
+    const data = {
+      name: '',
+      phone: '',
+      email: '',
+      mailingAddress: {
+        streetAddress1Text: '123 Main St',
+        streetAddress2Text: '',
+        suiteApartmentNumber: '',
+        cityName: '',
+        stateCode: '',
+        postalZipCode: '',
+        postalCode: '',
+        countryCode: '',
+      },
+    };
+
+    render(<ContactBlock contactData={data as never} />);
+
+    expect(screen.queryByText('Jane Doe')).toBeFalsy();
+    expect(screen.getByText('123 Main St')).toBeTruthy();
+    expect(screen.queryByText('Apt 4')).toBeFalsy();
+    expect(screen.queryByText('Suite 200')).toBeFalsy();
+    expect(screen.queryByText('USA')).toBeFalsy();
+    expect(screen.queryByText('111-222-3333')).toBeFalsy();
+    expect(screen.queryByText('jane@example.com')).toBeFalsy();
+  });
+
+  it('should render only city when only city is provided', () => {
+    const data = {
+      ...baseContactData,
+      mailingAddress: {
+        ...baseContactData.mailingAddress,
+        stateCode: '',
+        postalZipCode: '',
+      },
+    };
+
+    render(<ContactBlock contactData={data as never} />);
+
+    expect(screen.getByText('Atlanta')).toBeTruthy();
+    expect(screen.queryByText('GA')).toBeFalsy();
+    expect(screen.queryByText('30301')).toBeFalsy();
+  });
+
+  it('should render city, state, and zip together correctly', () => {
+    render(<ContactBlock contactData={baseContactData as never} />);
+
+    const combinedLine = screen.getByText((content) =>
+      content.includes('Atlanta') &&
+      content.includes('GA') &&
+      content.includes('30301')
+    );
+
+    expect(combinedLine).toBeTruthy();
+  });
+
+  it('should handle missing mailingAddress safely', () => {
+    const data = {
+      name: 'Jane Doe',
+      phone: '',
+      email: '',
+      mailingAddress: {} as never,
+    };
+
+    render(<ContactBlock contactData={data as never} />);
+
+    expect(screen.getByText('Jane Doe')).toBeTruthy();
+  });
+});
