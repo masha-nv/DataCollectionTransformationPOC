@@ -1,0 +1,170 @@
+import { useAxios } from '@uscis/elis/configuration';
+import { ADMITTANCE_TYPES, I131RpRtdRdAdmittance } from './admittance/i131-rp-rtd-rd-admittance';
+import { ContactBlockType, I131RpRtdRdMailingAddress } from './mailing-address/i131-rp-rtd-rd-mailing-address';
+import { I131RpRtdRdValidityPeriodProps, VALIDITY_PERIOD_TYPE } from './validity-period/i131-rp-rtd-rd-validity-period';
+import { ICaseQuestionResponseData, ICISCase, IContactAddressData, INTERNAL_APP } from '@uscis/elis/domain';
+import { useCallback, useEffect, useState } from 'react';
+import { getTodaysDateFormatted, getValidityPeriodEndDateFormatted } from './utils';
+import isEqual from 'lodash/isEqual';
+
+export type I131RpRtdRdValidityPeriodType = {
+  validityPeriodType: number;
+  startValidity: string;
+  endValidity: string;
+  isValid: boolean
+}
+
+export interface I131RpRtdRenderDecisionProps {
+  cisCase: ICISCase;
+  onUpdate: (data: I131RpRtdRenderDecisionType) => void;
+  isReadOnly:boolean;
+}
+
+export type I131RpRtdRenderDecisionType = {
+  mailingAddress: I131RpRtdRdMailingAddressType,
+  validityPeriod: I131RpRtdRdValidityPeriodType,
+  admittance: string;
+}
+export type I131RpRtdRdMailingAddressType = {
+  consulate?: string
+  contact: ContactBlockType | null;
+  sendToUSAddress: boolean
+}
+
+export type ContactDataType = {name: string, mailingAddress: IContactAddressData, phone: string, email: string}
+
+const FORM_QUESTION_IDS = [
+  21526, //send doc to us address
+  21529, //send doc to consulate/embassy
+];
+
+export const I131RpRtdRenderDecision: React.FC<I131RpRtdRenderDecisionProps> = ({
+  cisCase, onUpdate, isReadOnly
+}: I131RpRtdRenderDecisionProps) => {
+  const NONLRPCaseFilingTypeCodes = ["563", "564"]
+  const isLPRCaseFiling = !NONLRPCaseFilingTypeCodes.includes(cisCase.caseFilingTypeCode ?? "");
+  const [{ data: answersToP4Q7, loading: loadingResponses }] = useAxios<ICaseQuestionResponseData[]>(
+    `${INTERNAL_APP}/caseQuestionResponse/questionResponses/${cisCase.caseId}/${FORM_QUESTION_IDS.join(',')}`,
+    {useCache: false}
+  );
+
+  // get this person's mailing address details (if g-28 get rep's, else applicants);
+  const [ {data: contactData, loading: loadingContactData} ] = useAxios(
+    {method: 'GET', url: `${INTERNAL_APP}/contacts/getPrimaryContacts/${cisCase.caseId}`},
+    {useCache: false})
+
+  const [decisionData, setDecisionData] = useState<I131RpRtdRenderDecisionType>();
+
+  const USAddress = useCallback(() => {
+      //using mailing address - do we care about "safe address"?
+        const mailingAddress = contactData?.contactDataWrapper?.contactDataList?.find(
+          (contact: IContactAddressData) => contact.contactIdentifier === contactData?.contactDataWrapper.primaryAddressMailingId
+        ) as unknown as IContactAddressData ?? {};
+
+        const name: string = contactData?.fullName;
+        const phone: string =
+          contactData?.contactDataWrapper.primaryDaytimePhone || contactData?.contactDataWrapper.primaryMobilePhone;
+        const email: string = contactData?.contactDataWrapper.primaryEmail;
+        return {mailingAddress, name, phone, email}
+  }, [contactData]);
+
+  // initialize initial state
+  useEffect(() => {
+    if (!loadingResponses && answersToP4Q7 && !loadingContactData) {
+      const isUS = answersToP4Q7.some(r => r.actualFormQuestionId === 21526 && r.questionResponseCode === 'Y');
+
+      const initialState: I131RpRtdRenderDecisionType = {
+        admittance: isLPRCaseFiling ? ADMITTANCE_TYPES.PERMANENT_RESIDENT : '',
+        mailingAddress: {
+          sendToUSAddress: isUS,
+          contact: isUS ? USAddress() : null,
+          consulate: ''
+        },
+        validityPeriod: {
+          endValidity: getValidityPeriodEndDateFormatted(getTodaysDateFormatted(), VALIDITY_PERIOD_TYPE.ONE_YEAR),
+          startValidity: getTodaysDateFormatted(),
+          validityPeriodType: VALIDITY_PERIOD_TYPE.ONE_YEAR,
+          isValid: true
+        }
+      };
+
+      if (isUS) {
+        delete initialState.mailingAddress.consulate;
+      }
+
+      setDecisionData(initialState);
+      onUpdate(initialState);
+    }
+  }, [loadingResponses, answersToP4Q7, onUpdate, isLPRCaseFiling, loadingContactData, USAddress]);
+
+  const onAddressUpdate = useCallback((address: I131RpRtdRdMailingAddressType) => {
+    setDecisionData(prev => {
+      if (!prev) return prev;
+      if (!isEqual(address, prev?.mailingAddress)) {
+        const updated = {...prev, mailingAddress: address};
+        onUpdate(updated);
+        return updated;
+      } else {
+        return prev;
+      }
+    })
+  }, [onUpdate])
+
+  const onValidityUpdate = useCallback((validityPeriod: I131RpRtdRdValidityPeriodType) => {
+    setDecisionData(prev => {
+      if (!prev) return prev;
+      if (validityPeriod.endValidity !== prev?.validityPeriod.endValidity ||
+        validityPeriod.startValidity !== prev?.validityPeriod.startValidity ||
+        validityPeriod.validityPeriodType !== prev?.validityPeriod.validityPeriodType
+      ) {
+        const updated = {...prev, validityPeriod};
+        // Send the state up to Angular
+        onUpdate(updated);
+        return updated;
+      }
+      return prev;
+    })
+  }, [onUpdate])
+
+  const onAdmittanceUpdate = useCallback((admittance: string) => {
+    setDecisionData(prev => {
+      if (!prev) return prev;
+      if(admittance !== prev?.admittance) {
+        const updated = {...prev, admittance};
+        // Send the state up to Angular
+        onUpdate(updated);
+        return updated;
+      }
+      return prev;
+    })
+  }, [onUpdate])
+
+  //get the answer to P4 Q7a or P4 Q7b
+  //P4 Q7a means we use mailing address (or G-28 rep address if present)
+  //P4 Q7b means we use the embassy listed and make foreign address - use the response text to auto populate the consulate?
+
+ return (
+  decisionData ? (
+    <div className='pb-4'>
+      <I131RpRtdRdMailingAddress
+        readOnly={isReadOnly}
+        USAddress={USAddress()}
+        onUpdate={onAddressUpdate}
+        caseId={cisCase.caseId}
+        currentState={decisionData.mailingAddress}
+      />
+      <I131RpRtdRdValidityPeriodProps
+        onUpdate={onValidityUpdate}
+        readOnly={isReadOnly}
+        isForReentryPermit={true}
+        currentState={decisionData.validityPeriod}
+      />
+      <I131RpRtdRdAdmittance
+        readOnly={isReadOnly}
+        currentState={decisionData.admittance}
+        onUpdate={onAdmittanceUpdate}
+      />
+    </div>
+  ) : null
+);
+};
