@@ -1,0 +1,443 @@
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@uscis/elis/testing/library';
+import { I131RpRtdRdValidityPeriod, VALIDITY_PERIOD_TYPE } from './i131-rp-rtd-rd-validity-period';
+
+type DatePickerProps = {
+  id?: string;
+  disabled?: boolean;
+  value?: string;
+  'aria-label'?: string;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string) => void;
+};
+
+type RadioProps = {
+  id?: string;
+  disabled?: boolean;
+  children?: React.ReactNode;
+};
+
+type RadioOptionProps = {
+  id?: string;
+  checked?: boolean;
+  value?: number;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string) => void;
+  disabled?: boolean;
+  children?: React.ReactNode;
+  'aria-label'?: string;
+};
+
+type LabelProps = {
+  children?: React.ReactNode;
+  htmlFor?: string;
+  required?: boolean;
+};
+
+type ValidityState = {
+  validityPeriodType: number;
+  startValidity: string;
+  endValidity: string;
+  isValid: boolean;
+};
+
+jest.mock('../utils', () => ({
+  __esModule: true,
+  getTomorrowsDate: jest.fn(() => new Date('2026-04-21T00:00:00.000Z')),
+  getValidityPeriodEndDateFormatted: jest.fn((startDate: string, period: number) => {
+    if (startDate === '2026-04-20' && period === 1) {
+      return '2027-04-20';
+    }
+    if (startDate === '2026-04-20' && period === 2) {
+      return '2028-04-20';
+    }
+    if (startDate === '2026-05-01' && period === 1) {
+      return '2027-05-01';
+    }
+    if (startDate === '2026-05-01' && period === 2) {
+      return '2028-05-01';
+    }
+    return `${startDate}-period-${period}`;
+  }),
+}));
+
+jest.mock('@elis/react-beacon', () => {
+  const ReactModule = require('react') as typeof React;
+
+  const Label = ({ children, htmlFor, required }: LabelProps) => (
+    <label htmlFor={htmlFor}>
+      {children}
+      {required ? ' *' : ''}
+    </label>
+  );
+
+  const DatePicker = ({ id, disabled, value, onChange, 'aria-label': ariaLabel }: DatePickerProps) => (
+    <input
+      id={id}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      value={value ?? ''}
+      onChange={(event) => onChange?.(event, event.target.value)}
+      readOnly={false}
+    />
+  );
+
+  const Radio = ({ id, children, disabled }: RadioProps) => (
+    <div data-testid={id} data-disabled={String(disabled)}>
+      {children}
+    </div>
+  );
+
+  const RadioOption = ({
+    id,
+    checked,
+    value,
+    onChange,
+    disabled,
+    children,
+    'aria-label': ariaLabel,
+  }: RadioOptionProps) => (
+    <label htmlFor={id}>
+      <input
+        id={id}
+        type="radio"
+        aria-label={ariaLabel}
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange?.(event, String(value ?? ''))}
+        readOnly={false}
+      />
+      {children}
+    </label>
+  );
+
+  return {
+    __esModule: true,
+    Label,
+    DatePicker,
+    Radio,
+    RadioOption,
+  };
+});
+
+describe('I131RpRtdRdValidityPeriod', () => {
+  const baseState: ValidityState = {
+    validityPeriodType: VALIDITY_PERIOD_TYPE.ONE_YEAR,
+    startValidity: '2026-04-20',
+    endValidity: '2027-04-20',
+    isValid: true,
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-04-20T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('should render start date and validity radio options', () => {
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Travel Document Validity Start Date')).toHaveValue('2026-04-20');
+    expect(screen.getByLabelText('One Year Validity')).toBeChecked();
+    expect(screen.getByLabelText('Two Year Validity')).not.toBeChecked();
+    expect(screen.getByLabelText('Custom Validity')).not.toBeChecked();
+    expect(screen.queryByLabelText('Travel Document Validity End Date (Custom period)')).toBeFalsy();
+  });
+
+  it('should render custom end date when current state is custom', () => {
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={{
+          validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+          startValidity: '2026-04-20',
+          endValidity: '2026-05-10',
+          isValid: true,
+        }}
+        onUpdate={jest.fn()}
+        readOnly={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Travel Document Validity Start Date')).toBeTruthy();
+    expect(screen.getByLabelText('Custom Validity')).toBeChecked();
+    expect(screen.getByLabelText('Travel Document Validity End Date (Custom period)')).toHaveValue('2026-05-10');
+    expect(screen.getByText('Travel Document Validity From Date *')).toBeTruthy();
+    expect(screen.getByText('Travel Document Validity To Date *')).toBeTruthy();
+  });
+
+  it('should disable controls when readOnly is true', () => {
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={jest.fn()}
+        readOnly={true}
+      />
+    );
+
+    expect(screen.getByLabelText('Travel Document Validity Start Date')).toBeDisabled();
+    expect(screen.getByLabelText('One Year Validity')).toBeDisabled();
+    expect(screen.getByLabelText('Two Year Validity')).toBeDisabled();
+    expect(screen.getByLabelText('Custom Validity')).toBeDisabled();
+  });
+
+  it('should update start date and recalculate end date for one year validity', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity Start Date'));
+    await user.type(screen.getByLabelText('Travel Document Validity Start Date'), '2026-05-01');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.ONE_YEAR,
+      startValidity: '2026-05-01',
+      endValidity: '2027-05-01',
+      isValid: true,
+    });
+  });
+
+  it('should show error when start date is in the past', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity Start Date'));
+    await user.type(screen.getByLabelText('Travel Document Validity Start Date'), '2026-04-19');
+
+    expect(screen.getByText('Start date cannot be in the past.')).toBeTruthy();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.ONE_YEAR,
+      startValidity: '2026-04-19',
+      endValidity: '2027-04-20',
+      isValid: false,
+    });
+  });
+
+  it('should show error when start date is invalid', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity Start Date'));
+    await user.type(screen.getByLabelText('Travel Document Validity Start Date'), 'invalid-date');
+
+    expect(screen.getByText('Start date is invalid.')).toBeTruthy();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.ONE_YEAR,
+      startValidity: 'invalid-date',
+      endValidity: '2027-04-20',
+      isValid: false,
+    });
+  });
+
+  it('should switch to two years and recalculate end date', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.click(screen.getByLabelText('Two Year Validity'));
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.TWO_YEARS,
+      startValidity: '2026-04-20',
+      endValidity: '2028-04-20',
+      isValid: true,
+    });
+  });
+
+  it('should switch to custom and clear end date', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={baseState}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.click(screen.getByLabelText('Custom Validity'));
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+      startValidity: '2026-04-20',
+      endValidity: '',
+      isValid: false,
+    });
+  });
+
+  it('should show end date required error for custom end date when blank', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={{
+          validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+          startValidity: '2026-04-20',
+          endValidity: '',
+          isValid: false,
+        }}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.click(screen.getByLabelText('Custom Validity'));
+    await user.clear(screen.getByLabelText('Travel Document Validity End Date (Custom period)'));
+
+    expect(screen.getByText('End date is required.')).toBeTruthy();
+  });
+
+  it('should show end date invalid error for invalid custom end date', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={{
+          validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+          startValidity: '2026-04-20',
+          endValidity: '',
+          isValid: false,
+        }}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity End Date (Custom period)'));
+    await user.type(screen.getByLabelText('Travel Document Validity End Date (Custom period)'), 'bad-date');
+
+    expect(screen.getByText('End date is invalid.')).toBeTruthy();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+      startValidity: '2026-04-20',
+      endValidity: 'bad-date',
+      isValid: false,
+    });
+  });
+
+  it('should show end date must be after start date error for custom end date', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={{
+          validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+          startValidity: '2026-04-20',
+          endValidity: '',
+          isValid: false,
+        }}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity End Date (Custom period)'));
+    await user.type(screen.getByLabelText('Travel Document Validity End Date (Custom period)'), '2026-04-20');
+
+    expect(screen.getByText('Custom due date must be after the start date.')).toBeTruthy();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+      startValidity: '2026-04-20',
+      endValidity: '2026-04-20',
+      isValid: false,
+    });
+  });
+
+  it('should update custom end date when valid', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={{
+          validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+          startValidity: '2026-04-20',
+          endValidity: '',
+          isValid: false,
+        }}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity End Date (Custom period)'));
+    await user.type(screen.getByLabelText('Travel Document Validity End Date (Custom period)'), '2026-05-10');
+
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+      startValidity: '2026-04-20',
+      endValidity: '2026-05-10',
+      isValid: true,
+    });
+  });
+
+  it('should revalidate custom end date when start date changes', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const onUpdate = jest.fn();
+
+    render(
+      <I131RpRtdRdValidityPeriod
+        currentState={{
+          validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+          startValidity: '2026-04-20',
+          endValidity: '2026-04-21',
+          isValid: true,
+        }}
+        onUpdate={onUpdate}
+        readOnly={false}
+      />
+    );
+
+    await user.clear(screen.getByLabelText('Travel Document Validity Start Date'));
+    await user.type(screen.getByLabelText('Travel Document Validity Start Date'), '2026-04-22');
+
+    expect(screen.getByText('Custom due date must be after the start date.')).toBeTruthy();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      validityPeriodType: VALIDITY_PERIOD_TYPE.CUSTOM,
+      startValidity: '2026-04-22',
+      endValidity: '2026-04-21',
+      isValid: false,
+    });
+  });
+});
