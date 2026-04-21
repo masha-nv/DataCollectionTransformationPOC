@@ -1,0 +1,240 @@
+import { DatePicker, Label, Radio, RadioOption } from '@elis/react-beacon';
+import { ChangeEvent, useState } from 'react';
+import { getTomorrowsDate, getValidityPeriodEndDateFormatted } from '../utils';
+import { I131RpRtdRdValidityPeriodType } from '../i131-rp-rtd-render-decision';
+
+export const VALIDITY_PERIOD_TYPE = {
+  CUSTOM: 0,
+  ONE_YEAR: 1,
+  TWO_YEARS: 2,
+};
+
+export interface I131RpRtdRdValidityPeriodProps {
+  onUpdate: (data: I131RpRtdRdValidityPeriodType) => void;
+  currentState: I131RpRtdRdValidityPeriodType;
+  readOnly: boolean;
+}
+
+export const I131RpRtdRdValidityPeriod = ({
+  onUpdate,
+  currentState,
+  readOnly,
+}: I131RpRtdRdValidityPeriodProps) => {
+  const [selectedOption, setSelectedOption] = useState(
+    currentState.validityPeriodType ?? VALIDITY_PERIOD_TYPE.ONE_YEAR
+  );
+  const [startValidityError, setStartValidityError] = useState<string>('');
+  const [endValidityError, setEndValidityError] = useState<string>('');
+
+  // Validate start date: must be today or future
+  const validateStartDate = (startDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
+    if (isNaN(start.getTime())) {
+      setStartValidityError('Start date is invalid.');
+      return false;
+    }
+    if (start < today) {
+      setStartValidityError('Start date cannot be in the past.');
+      return false;
+    }
+    setStartValidityError('');
+    return true;
+  };
+
+  // Validate end date: must be after start date
+  const validateEndDate = (startDate: string, endDate: string) => {
+    if (!endDate) {
+      setEndValidityError('End date is required.');
+      return false;
+    }
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    if (isNaN(end.getTime())) {
+      setEndValidityError('End date is invalid.');
+      return false;
+    }
+    if (end <= start) {
+      setEndValidityError('Custom due date must be after the start date.');
+      return false;
+    }
+    setEndValidityError('');
+    return true;
+  };
+
+  // On Start Date change
+  const onStartValidityChange = (startDate: string) => {
+    if (!validateStartDate(startDate)) {
+      onUpdate({ ...currentState, startValidity: startDate, isValid: false }); // Still update so user can see/fix error
+      return;
+    }
+    let endDate = currentState.endValidity;
+    if (currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.ONE_YEAR) {
+      endDate = getValidityPeriodEndDateFormatted(startDate, VALIDITY_PERIOD_TYPE.ONE_YEAR);
+    }
+    if (currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.TWO_YEARS) {
+      endDate = getValidityPeriodEndDateFormatted(startDate, VALIDITY_PERIOD_TYPE.TWO_YEARS);
+    }
+    // Also revalidate end date if custom
+    let validEndDate = true;
+    if (currentState.validityPeriodType === VALIDITY_PERIOD_TYPE.CUSTOM) {
+      validEndDate = validateEndDate(startDate, currentState.endValidity);
+    }
+    onUpdate({ ...currentState, startValidity: startDate, endValidity: endDate, isValid: validEndDate });
+  };
+
+  // On End Date (Custom) change
+  const onEndValidityChange = (endDate: string) => {
+    if (!validateEndDate(currentState.startValidity, endDate)) {
+      onUpdate({ ...currentState, endValidity: endDate, isValid: false }); // Still update for user fix
+      return;
+    }
+    onUpdate({ ...currentState, endValidity: endDate, isValid: Boolean(startValidityError) === false });
+  };
+
+  // On radio changed (validity period type)
+  const onValidityPeriodTypeChange = (event: ChangeEvent, value: string) => {
+    const validityPeriodToUse = Number(value);
+    if (validityPeriodToUse !== VALIDITY_PERIOD_TYPE.CUSTOM) {
+      setEndValidityError('');
+    }
+    setSelectedOption(validityPeriodToUse);
+    let endV = currentState.endValidity;
+    switch (validityPeriodToUse) {
+      case VALIDITY_PERIOD_TYPE.CUSTOM:
+        endV = '';
+        break;
+      case VALIDITY_PERIOD_TYPE.ONE_YEAR:
+        if (currentState.startValidity) {
+          endV = getValidityPeriodEndDateFormatted(currentState.startValidity, 1);
+        }
+        break;
+      case VALIDITY_PERIOD_TYPE.TWO_YEARS:
+        if (currentState.startValidity) {
+          endV = getValidityPeriodEndDateFormatted(currentState.startValidity, 2);
+        }
+        break;
+      default:
+        break;
+    }
+    let validEndDate = true;
+    if (validityPeriodToUse === VALIDITY_PERIOD_TYPE.CUSTOM && currentState.startValidity && endV) {
+      validEndDate = validateEndDate(currentState.startValidity, endV);
+    }
+    onUpdate({
+      ...currentState,
+      validityPeriodType: validityPeriodToUse,
+      endValidity: endV,
+      isValid: validEndDate && !!endV && Boolean(startValidityError) === false,
+    });
+  };
+
+  const isCustomValidity = selectedOption === VALIDITY_PERIOD_TYPE.CUSTOM;
+
+  return (
+    <div>
+      <div className="mb-4">
+        <Label required htmlFor="validity-period-start-date">
+          Travel Document Validity {isCustomValidity ? 'From Date' : 'Start Date'}
+        </Label>
+        <DatePicker
+          disabled={readOnly}
+          id="validity-period-start-date"
+          aria-label="Travel Document Validity Start Date"
+          minDate={new Date()}
+          value={currentState.startValidity}
+          onChange={(e, v) => onStartValidityChange(v)}
+        />
+        {startValidityError && (
+          <div
+            role="alert"
+            aria-live="polite"
+            style={{ color: 'red', marginTop: 4 }}
+            id="validity-period-start-date-error"
+          >
+            {startValidityError}
+          </div>
+        )}
+      </div>
+      <div className="mb-4">
+        <Label required htmlFor="validity-period-selection">
+          Travel Document Validity {isCustomValidity ? 'To Date' : 'Period'}
+        </Label>
+        <Radio
+          disabled={readOnly}
+          id="validity-period-selection"
+          required
+          name="travelDocumentValidityPeriodSelection"
+        >
+          <RadioOption
+            id="one-year-validity"
+            key='one-year-validity'
+            checked={selectedOption === VALIDITY_PERIOD_TYPE.ONE_YEAR}
+            value={VALIDITY_PERIOD_TYPE.ONE_YEAR}
+            onChange={onValidityPeriodTypeChange}
+            disabled={readOnly}
+            aria-label="One Year Validity"
+          >
+            1 Year
+          </RadioOption>
+              <RadioOption
+                disabled={readOnly}
+                id="two-years-validity"
+                key='two-years-validity'
+                checked={selectedOption === VALIDITY_PERIOD_TYPE.TWO_YEARS}
+                value={VALIDITY_PERIOD_TYPE.TWO_YEARS}
+                onChange={onValidityPeriodTypeChange}
+                aria-label="Two Year Validity"
+              >
+                2 Years
+              </RadioOption>
+              <RadioOption
+                disabled={readOnly}
+                id="custom-validity"
+                key='custom-validity'
+                checked={selectedOption === VALIDITY_PERIOD_TYPE.CUSTOM}
+                value={VALIDITY_PERIOD_TYPE.CUSTOM}
+                onChange={onValidityPeriodTypeChange}
+                aria-label="Custom Validity"
+              >
+                Custom
+              </RadioOption>
+        </Radio>
+        {isCustomValidity && (
+          <>
+            <DatePicker
+              disabled={readOnly}
+              aria-label="Travel Document Validity End Date (Custom period)"
+              id="validity-period-end-date"
+              value={currentState.endValidity}
+              onChange={(e, v) => onEndValidityChange(v)}
+              minDate={getTomorrowsDate()}
+              maxDate={
+                currentState.startValidity
+                  ? new Date(getValidityPeriodEndDateFormatted(currentState.startValidity, 2))
+                  : undefined
+              }
+            />
+            {endValidityError && (
+              <div
+                role="alert"
+                aria-live="polite"
+                style={{ color: 'red', marginTop: 4 }}
+                id="validity-period-end-date-error"
+              >
+                {endValidityError}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <hr />
+    </div>
+  );
+};
