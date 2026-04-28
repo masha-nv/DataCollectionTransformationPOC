@@ -1,0 +1,169 @@
+import { Alert, AlertVariant, Button, ButtonType, Card, Icon, IconType, WithId } from '@elis/react-beacon';
+import { DeliveryInformation, DeliveryInformationData } from '@uscis/elis/case-review';
+import { CASE_FILING_TYPE_CODES, ICISCase, INTERNAL_APP } from '@uscis/elis/domain';
+import { useCallback, useEffect, useState } from 'react';
+import { I131RpRtdRenderDecision, I131RpRtdRenderDecisionType } from './i131-rp-rtd-render-decision';
+import { useAxios } from '@uscis/elis/configuration';
+import styles from './i131-rp-rtd-rd.module.scss';
+import { ADMITTANCE_TYPES } from './admittance/i131-rp-rtd-rd-admittance';
+
+export interface I131RpRtdCaseDetailsRenderDecisionProps extends WithId {
+  cisCase: ICISCase;
+}
+
+export const I131RpRtdCaseDetailsRenderDecision = ({
+  id,
+  cisCase,
+}: I131RpRtdCaseDetailsRenderDecisionProps) => {
+  const [showConsulates, setShowConsulates] = useState(false);
+  const [editingApprovalDetails, setEditingApprovalDetails] = useState(false);
+  const [resetCounter, setResetCounter] = useState(0);
+  const [approvalDetails, setApprovalDetails] = useState<I131RpRtdRenderDecisionType>();
+
+  //axios call - check if editable
+  //endpoint should check if the case is a I-131 RP/RTD and there is a Travel Document Production Request task in initiate status
+  //every time an update is made we should check against this
+
+  const [{ data: isTravelDocProdRequestUpdateable }, getTravelDocProdRequestUpdateable] = useAxios(
+    {
+      url: `${INTERNAL_APP}/i131/caseReview/travelDocProdRequest/${cisCase?.caseId}/updateable`,
+      method: 'GET',
+      headers: { 'Cache-Control': 'no-cache' },
+    },
+    {
+      useCache: false,
+    }
+  );
+
+  //get the decision reason for this case
+  const [{ data: caseDecisionView }, getCaseDecisionView] = useAxios(
+    {
+      url: `${INTERNAL_APP}/cases/${cisCase?.caseId}/person/${cisCase?.personId}/decision/`,
+      method: 'GET',
+      headers: { 'Cache-Control': 'no-cache' },
+    },
+    {
+      useCache: false,
+    }
+  );
+
+  const [, saveApprovalDetailUpdates] = useAxios(
+    {
+      url: `${INTERNAL_APP}/i131/caseReview/approvalDetails/update/${cisCase?.caseId}`,
+      method: 'POST',
+      headers: { 'Cache-Control': 'no-cache' },
+    },
+    {
+      useCache: false,
+    }
+  );
+
+  //consulates shown only when this is an I-131 RP or RTD inside US and the decision reason code was approved and sent to applicant
+  //OR when it's an I-131 RTD outside the US and q7b was selected
+  useEffect(() => {
+    if ([795, 796].includes(caseDecisionView?.decisionReasonCodeEnum)) {
+      setShowConsulates(true);
+    }
+  }, [caseDecisionView, setShowConsulates]);
+
+  const onDeliveryInfoLoaded = useCallback(
+    (data: DeliveryInformationData) => {
+      if (
+        [
+          CASE_FILING_TYPE_CODES.I131RTD_LPR_Outside_US,
+          CASE_FILING_TYPE_CODES.I131RTD_Non_LPR_Outside_US,
+        ].includes(Number(cisCase?.caseFilingTypeCode as unknown as CASE_FILING_TYPE_CODES))
+      ) {
+        setShowConsulates(data?.sendTravelDocumentToApplicantHistory?.[0]?.caseQuestRespIndCd === 'Y');
+      }
+    },
+    [cisCase, setShowConsulates]
+  );
+
+  const onApprovalDetailsUpdated = useCallback(
+    (data: I131RpRtdRenderDecisionType) => {
+      setApprovalDetails(data);
+    },
+    [setApprovalDetails]
+  );
+
+  const editable = isTravelDocProdRequestUpdateable || false;
+
+  const hasApprovalDetailsChanged =
+    approvalDetails?.admittance !==
+      ADMITTANCE_TYPES[caseDecisionView?.classOfAdmission as keyof typeof ADMITTANCE_TYPES] ||
+    (showConsulates && approvalDetails?.consulate !== caseDecisionView?.consulateOffice) ||
+    approvalDetails?.validityPeriod?.startValidity !== caseDecisionView?.startDate ||
+    approvalDetails?.validityPeriod.endValidity !== caseDecisionView?.endDate;
+
+  return (
+    <div>
+      <Alert variant={AlertVariant.warning}>
+        You must use the Case Review task user interface to render a decision on this case.
+      </Alert>
+      <DeliveryInformation
+        cisCase={cisCase}
+        id={`${id}-delivery-info`}
+        onDataLoaded={onDeliveryInfoLoaded}
+        isReadOnly={!editable}
+      />
+      <div>
+        <div className={styles['approval-decision-info-header']}>
+          <h3>Approval Decision Information</h3>
+          {!editingApprovalDetails && (
+            <Button
+              id={`${id}-btn-edit`}
+              type={ButtonType.tertiary}
+              onClick={() => {
+                setEditingApprovalDetails(true);
+              }}
+              disabled={!editable}
+            >
+              <Icon type={IconType.pencilAlt} />
+              Edit
+            </Button>
+          )}
+        </div>
+        <Card
+          id={`${id}-approval-decision-info`}
+          footer={
+            editingApprovalDetails && (
+              <div className={styles['approval-details-footer']}>
+                <Button
+                  id={`${id}-edit-approval-details-cancel`}
+                  onClick={() => {
+                    setResetCounter((prev) => prev + 1);
+                    setEditingApprovalDetails(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  id={`${id}-edit-approval-details-save`}
+                  onClick={() => {
+                    saveApprovalDetailUpdates({ data: approvalDetails }).then(() => {
+                      setEditingApprovalDetails(false);
+                      getTravelDocProdRequestUpdateable();
+                    });
+                  }}
+                  disabled={!hasApprovalDetailsChanged}
+                >
+                  Save
+                </Button>
+              </div>
+            )
+          }
+        >
+          <I131RpRtdRenderDecision
+            key={resetCounter}
+            cisCase={cisCase}
+            onUpdate={onApprovalDetailsUpdated}
+            isReadOnly={!editingApprovalDetails}
+            showConsulates={showConsulates}
+            existingDecision={caseDecisionView}
+          />
+        </Card>
+      </div>
+    </div>
+  );
+};
