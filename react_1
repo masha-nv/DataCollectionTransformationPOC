@@ -1,0 +1,160 @@
+import { ADMITTANCE_TYPES, I131RpRtdRdAdmittance } from './admittance/i131-rp-rtd-rd-admittance';
+import {
+  I131RpRtdRdValidityPeriod,
+  VALIDITY_PERIOD_TYPE,
+} from './validity-period/i131-rp-rtd-rd-validity-period';
+import { ICISCase, RenderDecisionView } from '@uscis/elis/domain';
+import { useCallback, useEffect, useState } from 'react';
+import { getTodaysDateFormatted, getValidityPeriodEndDateFormatted } from './utils';
+import { ConsulateOrEmbassyAddress } from './mailing-address/consulate-or-embassy-address';
+
+export type I131RpRtdRdValidityPeriodType = {
+  validityPeriodType: number;
+  startValidity: string;
+  endValidity: string;
+  isValid: boolean;
+};
+
+export interface I131RpRtdRenderDecisionProps {
+  cisCase: ICISCase | undefined;
+  onUpdate: (data: I131RpRtdRenderDecisionType) => void;
+  isReadOnly?: boolean;
+  showConsulates?: boolean;
+  existingDecision?: RenderDecisionView;
+}
+
+export type I131RpRtdRenderDecisionType = {
+  consulate?: string;
+  validityPeriod: I131RpRtdRdValidityPeriodType;
+  admittance: string;
+};
+
+const RP_TYPE = '562';
+const RAIO_CASE_FILING_TYPES = ['564', '566'];
+const NON_LPR_RTD_TYPES = ['563', '564'];
+const RP_LPR_RTD_TYPES = ['562', '565', '566'];
+
+const resolveValidityPeriodType = (startDateStr: string, endDateStr: string) => {
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  const daysDifference = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+  switch (daysDifference) {
+    case 365:
+      return VALIDITY_PERIOD_TYPE.ONE_YEAR;
+    case 730:
+      return VALIDITY_PERIOD_TYPE.TWO_YEARS;
+    default:
+      return VALIDITY_PERIOD_TYPE.CUSTOM;
+  }
+};
+
+export const I131RpRtdRenderDecision: React.FC<I131RpRtdRenderDecisionProps> = ({
+  cisCase,
+  onUpdate,
+  isReadOnly = false,
+  showConsulates = false,
+  existingDecision,
+}: I131RpRtdRenderDecisionProps) => {
+  const [initialized, setInitialized] = useState(false);
+  const [decisionData, setDecisionData] = useState<I131RpRtdRenderDecisionType>({
+    consulate: '',
+    validityPeriod: {
+      validityPeriodType: RP_TYPE === cisCase?.caseFilingTypeCode ? -1 : VALIDITY_PERIOD_TYPE.ONE_YEAR,
+      startValidity: getTodaysDateFormatted(),
+      endValidity: getValidityPeriodEndDateFormatted(getTodaysDateFormatted(), 1),
+      isValid: RP_TYPE !== cisCase?.caseFilingTypeCode,
+    },
+    admittance: RP_LPR_RTD_TYPES.includes(cisCase?.caseFilingTypeCode as string)
+      ? ADMITTANCE_TYPES.PERMANENT_RESIDENT
+      : '',
+  });
+
+  useEffect(() => {
+    if (existingDecision) {
+      setDecisionData((prev) => {
+        const newState = { ...prev, validityPeriod: { ...prev.validityPeriod } };
+        newState.validityPeriod = {
+          startValidity: existingDecision.startDate,
+          endValidity: existingDecision.endDate,
+          isValid: true,
+          validityPeriodType: resolveValidityPeriodType(existingDecision.startDate, existingDecision.endDate),
+        };
+        newState.consulate = existingDecision.consulateOffice || '';
+        newState.admittance =
+          ADMITTANCE_TYPES[existingDecision.classOfAdmission as keyof typeof ADMITTANCE_TYPES];
+        onUpdate(newState);
+        return newState;
+      });
+    }
+  }, [existingDecision, setDecisionData]);
+
+  const onConsulateUpdate = useCallback(
+    (consulate: string) => {
+      setDecisionData((prev) => {
+        const updated = { ...prev, consulate };
+        onUpdate(updated);
+        return updated;
+      });
+    },
+    [onUpdate]
+  );
+
+  const onValidityUpdate = useCallback(
+    (validityPeriod: I131RpRtdRdValidityPeriodType) => {
+      setDecisionData((prev) => {
+        if (
+          validityPeriod.endValidity !== prev?.validityPeriod.endValidity ||
+          validityPeriod.startValidity !== prev?.validityPeriod.startValidity ||
+          validityPeriod.validityPeriodType !== prev?.validityPeriod.validityPeriodType
+        ) {
+          const updated = { ...prev, validityPeriod };
+          onUpdate(updated);
+          return updated;
+        }
+        return prev;
+      });
+    },
+    [onUpdate]
+  );
+
+  const onAdmittanceUpdate = useCallback(
+    (admittance: string) => {
+      setDecisionData((prev) => {
+        const updated = { ...prev, admittance };
+        onUpdate(updated);
+        return updated;
+      });
+    },
+    [onUpdate]
+  );
+
+  useEffect(() => {
+    if (!initialized) {
+      onUpdate(decisionData);
+      setInitialized(true);
+    }
+  }, [initialized, decisionData, onUpdate]);
+
+  return (
+    <div className="pb-4">
+      {showConsulates && (
+        <ConsulateOrEmbassyAddress
+          selectedConsulate={decisionData?.consulate || ''}
+          onUpdate={onConsulateUpdate}
+          readOnly={isReadOnly}
+          optional={RAIO_CASE_FILING_TYPES.includes(cisCase?.caseFilingTypeCode as string)}
+        />
+      )}
+      <I131RpRtdRdValidityPeriod
+        onUpdate={onValidityUpdate}
+        readOnly={isReadOnly}
+        currentState={decisionData?.validityPeriod}
+      />
+      <I131RpRtdRdAdmittance
+        readOnly={isReadOnly || !NON_LPR_RTD_TYPES.includes(cisCase?.caseFilingTypeCode as string)}
+        currentState={decisionData.admittance}
+        onUpdate={onAdmittanceUpdate}
+      />
+    </div>
+  );
+};
