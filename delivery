@@ -1,0 +1,1196 @@
+import {
+  Alert,
+  AlertVariant,
+  Badge,
+  BadgeVariant,
+  Button,
+  ButtonType,
+  DataView,
+  FormGroup,
+  hookFormUtils,
+  Icon,
+  IconType,
+  IDataViewFieldProps,
+  Select,
+  SelectOption,
+  SelectSize,
+  SelectType,
+  SubmitButton,
+  TextInput,
+  WithId,
+} from '@elis/react-beacon';
+import { useAxios } from '@uscis/elis/configuration';
+import { ICISCase, INTERNAL_APP } from '@uscis/elis/domain';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { DataviewUpdatedBadge } from '../../../i129/reusable-dataview/dataview-updated-badge';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { DeliveryInformationData } from '../i131-rp-and-rtd.types';
+import { useRefData } from '@uscis/elis/state';
+import { AddressForm, addressSchema } from './address-form';
+import { EMAIL_REG_EXP, INVALID_EMAIL_MESSAGE } from '@uscis/elis/contacts';
+import { ReadOnlyAddressForm } from './read-only-address-form';
+import styles from './delivery-information.module.scss';
+import { HistoricalAddressDetails } from './historical-address-details';
+import { HistoricalYesNoCaseQuestionResponseDetails } from './historical-yes-no-case-question-response-details';
+import { HistoricalGenericStringDetails } from './history-generic-string-details';
+import { resolveCountryName } from './utils';
+
+const EMPTY_FORM = {
+  sendTravelDocumentToApplicant: '',
+  consulateCity: '',
+  consulateCountry: '',
+  sendNoticeToMailingAddress: '',
+  noticePhone: '',
+  noticeEmail: '',
+  noticeAddress: {
+    inCareOfName: '',
+    streetAddress1Text: '',
+    streetAddress2Text: '',
+    countryCode: '',
+    cityName: '',
+    postalCode: '',
+    provinceNm: '',
+    postalZipCode: '',
+    stateCode: '',
+    unitTypeCode: '',
+    suiteApartmentNumber: '',
+  },
+};
+
+const deliveryInformationSchema = yup
+  .object({
+    sendTravelDocumentToApplicant: yup.string().required('Travel Document destination is required'),
+    consulateCity: yup.string().when('sendTravelDocumentToApplicant', {
+      is: 'false',
+      then: (schema) => schema.required('Consulate/Embassy City is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    consulateCountry: yup.string().when('sendTravelDocumentToApplicant', {
+      is: 'false',
+      then: (schema) => schema.required('Consulate/Embassy Country is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    sendNoticeToMailingAddress: yup.string().required('Notice destination is required'),
+    noticePhone: yup.string().max(25).notRequired().label('Phone number'),
+    noticeEmail: yup
+      .string()
+      .max(100)
+      .notRequired()
+      .matches(EMAIL_REG_EXP, INVALID_EMAIL_MESSAGE)
+      .email()
+      .label('Email'),
+  })
+  .concat(addressSchema);
+
+export interface DeliveryInformationProps extends WithId {
+  cisCase: ICISCase;
+  onDataLoaded?: (data: DeliveryInformationData) => void;
+  isReadOnly?: boolean;
+  isRenderDecisionView?: boolean;
+}
+
+export const DeliveryInformation: React.FC<DeliveryInformationProps> = ({
+  id,
+  cisCase,
+  onDataLoaded,
+  isReadOnly = false,
+  isRenderDecisionView = false
+}: DeliveryInformationProps) => {
+  const [isEditable, setIsEditable] = useState(false);
+  const documentType = cisCase?.caseFilingTypeCode === '562' ? 'Re-entry Permit' : 'Refugee Travel Document';
+
+  const refData = useRefData();
+  const stateCodes = refData?.stateCodes || [];
+  const countryList = refData?.countryCodes || [];
+
+  const [{ data }, getDeliveryInformationData] = useAxios<DeliveryInformationData>(
+    {
+      url: `${INTERNAL_APP}/i131/caseReview/deliveryInformation/${cisCase?.caseId}`,
+      method: 'GET',
+      headers: { 'Cache-Control': 'no-cache' },
+    },
+    {
+      useCache: false,
+    }
+  );
+
+  const [, updateDeliveryInformation] = useAxios(
+    {
+      url: `${INTERNAL_APP}/i131/caseReview/deliveryInformation/${cisCase?.caseId}`,
+      method: 'POST',
+    },
+    {
+      manual: true,
+    }
+  );
+
+  const deliveryInformationForm = useForm({
+    resolver: yupResolver(deliveryInformationSchema),
+    defaultValues: {
+      sendTravelDocumentToApplicant: '',
+      consulateCity: '',
+      consulateCountry: '',
+      sendNoticeToMailingAddress: '',
+      noticePhone: '',
+      noticeEmail: '',
+      noticeAddress: {
+        inCareOfName: '',
+        streetAddress1Text: '',
+        streetAddress2Text: '',
+        countryCode: '',
+        cityName: '',
+        postalCode: '',
+        provinceNm: '',
+        postalZipCode: '',
+        stateCode: '',
+        unitTypeCode: '',
+        suiteApartmentNumber: '',
+      },
+    },
+    mode: 'onChange',
+  });
+
+  const {
+    watch,
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isDirty },
+  } = deliveryInformationForm;
+
+  const [isSubmittable, setSubmittable] = useState(false);
+  useEffect(() => {
+    setSubmittable(isDirty);
+  }, [isDirty]);
+
+  const resetFormData = useCallback(() => {
+    reset(
+      data
+        ? {
+            sendTravelDocumentToApplicant: String(
+              data.sendTravelDocumentToApplicantHistory?.[0]?.caseQuestRespIndCd === 'N'
+            ),
+            consulateCity: data.requestedConsulateLocationHistory?.latest?.item?.cityName || '',
+            consulateCountry: data.requestedConsulateLocationHistory?.latest?.item?.countryCode || '',
+            sendNoticeToMailingAddress: String(
+              data.sendNoticeToMailingAddressHistory?.[0]?.caseQuestRespIndCd === 'N'
+            ),
+            noticePhone: data.notificationPhoneHistory?.latest?.item || '',
+            noticeEmail: data.notificationEmailHistory?.latest?.item || '',
+            noticeAddress: {
+              inCareOfName: data.notificationAddressHistory?.latest?.item?.mailRecipientInCareOfName || '',
+              streetAddress1Text: data.notificationAddressHistory?.latest?.item?.streetAddress1Text || '',
+              streetAddress2Text: data.notificationAddressHistory?.latest?.item?.streetAddress2Text || '',
+              countryCode: data.notificationAddressHistory?.latest?.item?.countryCode || '',
+              cityName: data.notificationAddressHistory?.latest?.item?.cityName || '',
+              postalCode: data.notificationAddressHistory?.latest?.item?.postalCode || '',
+              provinceNm: data.notificationAddressHistory?.latest?.item?.provinceNm || '',
+              postalZipCode: data.notificationAddressHistory?.latest?.item?.postalZipCode || '',
+              stateCode: data.notificationAddressHistory?.latest?.item?.stateCode || '',
+              unitTypeCode: data.notificationAddressHistory?.latest?.item?.unitTypeCode || '',
+              suiteApartmentNumber: data.notificationAddressHistory?.latest?.item?.suiteApartmentNumber || '',
+            },
+          }
+        : EMPTY_FORM
+    );
+  }, [data, reset]);
+
+  useEffect(() => {
+    //resets the form data every time 'data' changes
+    resetFormData();
+  }, [resetFormData]);
+
+  useEffect(() => {
+    if (data && onDataLoaded) {
+      onDataLoaded(data);
+    }
+  }, [data, onDataLoaded]);
+
+  const formSendTravelDocumentToApplicantSelection = watch('sendTravelDocumentToApplicant');
+  const formSendNoticeToMailingAddress = watch('sendNoticeToMailingAddress');
+
+  const fields: IDataViewFieldProps<DeliveryInformationData | undefined>[] = [
+    {
+      label: `Where do you want your ${documentType} sent?`,
+      isFieldRequired: true,
+      readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+        return (
+          <div className="d-flex" title="Document Mailing Destination">
+            <div className="pl-2">
+              {data?.sendTravelDocumentToApplicantHistory[0]?.caseQuestRespIndCd === 'N'
+                ? 'US Address'
+                : 'Consulate/Embassy'}
+            </div>
+          </div>
+        );
+      },
+      details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+        return (
+          <div>
+            {!isEditable && (
+              <HistoricalYesNoCaseQuestionResponseDetails
+                data={data?.sendTravelDocumentToApplicantHistory || []}
+                labelForYes="Consulate/Embassy"
+                labelForNo="US Address"
+              />
+            )}
+          </div>
+        );
+      },
+      badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+        return (
+          <DataviewUpdatedBadge
+            revisionNumber={data?.sendTravelDocumentToApplicantHistory?.[0]?.revisionNumber}
+            id={`${id}-doc-mailing-dest-updated-badge`}
+          />
+        );
+      },
+      edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+        return (
+          <FormGroup
+            id={`${id}-delivery-info-form-send-to-us`}
+            errorMessages={hookFormUtils.getErrorMessages(errors, 'sendTravelDocumentToApplicant')}
+            key="fg-send-td-to-applicant"
+          >
+            <Controller
+              name="sendTravelDocumentToApplicant"
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Select
+                  type={SelectType.primary}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  id={`${id}-sendTravelDocumentToApplicant-select`}
+                  size={SelectSize.fill}
+                  value={value}
+                  required
+                >
+                  {[
+                    { label: 'US Address', value: 'true' },
+                    { label: 'Consulate/Embassy', value: 'false' },
+                  ].map((travelDocumentLocation) => {
+                    return (
+                      <SelectOption
+                        id={`${id}-${travelDocumentLocation.label}-id`}
+                        value={travelDocumentLocation.value}
+                        key={travelDocumentLocation.label}
+                      >
+                        {travelDocumentLocation.label}
+                      </SelectOption>
+                    );
+                  })}
+                </Select>
+              )}
+            />
+          </FormGroup>
+        );
+      },
+      actions: (
+        field: unknown,
+        record: DeliveryInformationData | undefined,
+        index: number,
+        toggle: () => void
+      ) => {
+        return [
+          {
+            label: 'Expand History',
+            labelSecondary: 'Collapse',
+            onClick: toggle,
+          },
+        ];
+      },
+    },
+  ];
+
+  if (
+    formSendTravelDocumentToApplicantSelection === 'false' ||
+    (formSendTravelDocumentToApplicantSelection === undefined &&
+      data?.sendTravelDocumentToApplicant === false)
+  ) {
+    fields.push(
+      {
+        label: 'Consulate/Embassy City',
+        field: 'requestedConsulateLocationHistory?.latest?.cityName',
+        isFieldRequired: true,
+        readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <div className="d-flex" title="Document Mailing Destination City">
+              <div className="pl-2">{data?.requestedConsulateLocationHistory?.latest?.item?.cityName}</div>
+            </div>
+          );
+        },
+        details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <div>
+              {!isEditable && (
+                <HistoricalAddressDetails
+                  data={data?.requestedConsulateLocationHistory}
+                  cityOnly
+                  countryList={countryList}
+                />
+              )}
+            </div>
+          );
+        },
+        badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <DataviewUpdatedBadge
+              revisionNumber={data?.requestedConsulateLocationHistory?.latest?.revisionNumber}
+              id={`${id}-doc-mailing-dest-city-updated-badge`}
+            />
+          );
+        },
+        edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <FormGroup
+              id={`${id}-form-consulate-city-fg`}
+              errorMessages={hookFormUtils.getErrorMessages(errors, 'consulateCity')}
+              key="fg-consulate-city"
+            >
+              <Controller
+                name="consulateCity"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    id={`${id}-form-consulate-city`}
+                    key={`form-consulate-city`}
+                    value={value}
+                    maxLength={40}
+                    onBlur={onBlur}
+                    onChange={onChange}
+                  />
+                )}
+              />
+            </FormGroup>
+          );
+        },
+        actions: (
+          field: unknown,
+          record: DeliveryInformationData | undefined,
+          index: number,
+          toggle: () => void
+        ) => {
+          return [
+            {
+              label: 'Expand History',
+              labelSecondary: 'Collapse',
+              onClick: toggle,
+            },
+          ];
+        },
+      },
+      {
+        label: 'Consulate/Embassy Country',
+        field: 'requestedConsulateLocationHistory?.latest?.item?.countryCode',
+        isFieldRequired: true,
+        readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <div className="d-flex" title="Document Mailing Destination Country">
+              <div className="pl-2">
+                {resolveCountryName(
+                  data?.requestedConsulateLocationHistory?.latest?.item?.countryCode,
+                  countryList
+                )}
+              </div>
+            </div>
+          );
+        },
+        badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <DataviewUpdatedBadge
+              revisionNumber={data?.requestedConsulateLocationHistory?.latest?.revisionNumber}
+              id={`${id}-doc-mailing-dest-country-updated-badge`}
+            />
+          );
+        },
+        details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <div>
+              {!isEditable && (
+                <HistoricalAddressDetails
+                  data={data?.requestedConsulateLocationHistory}
+                  countryList={countryList}
+                  countryOnly
+                />
+              )}
+            </div>
+          );
+        },
+        edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <FormGroup
+              id={`${id}-form-consulate-country-fg`}
+              errorMessages={hookFormUtils.getErrorMessages(errors, 'consulateCountry')}
+              key="fg-consulate-country"
+            >
+              <Controller
+                name="consulateCountry"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Select
+                    type={SelectType.primary}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    id={`${id}-consulateCountry-select`}
+                    size={SelectSize.fill}
+                    value={value}
+                    filterable
+                    required
+                  >
+                    {countryList.map((country) => {
+                      return (
+                        <SelectOption
+                          id={`${id}-${country.countryCode}-id`}
+                          value={country.countryCode}
+                          key={country.countryCode}
+                        >
+                          {country.countryName}
+                        </SelectOption>
+                      );
+                    })}
+                  </Select>
+                )}
+              />
+            </FormGroup>
+          );
+        },
+        actions: (
+          field: unknown,
+          record: DeliveryInformationData | undefined,
+          index: number,
+          toggle: () => void
+        ) => {
+          return [
+            {
+              label: 'Expand History',
+              labelSecondary: 'Collapse',
+              onClick: toggle,
+            },
+          ];
+        },
+      },
+      {
+        label: 'Document Notification Destination',
+        isFieldRequired: true,
+        readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <div className="d-flex" title="Document Notification Destination">
+              <div className="pl-2">
+                {data?.sendNoticeToMailingAddressHistory[0]?.caseQuestRespIndCd === 'N'
+                  ? 'Mailing Address'
+                  : 'Part 4 - Question 9.A Address'}
+              </div>
+            </div>
+          );
+        },
+        badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <DataviewUpdatedBadge
+              revisionNumber={data?.sendNoticeToMailingAddressHistory?.[0]?.revisionNumber}
+              id={`${id}-doc-mailing-dest-updated-badge`}
+            />
+          );
+        },
+        details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <div>
+              {!isEditable && (
+                <HistoricalYesNoCaseQuestionResponseDetails
+                  data={data?.sendNoticeToMailingAddressHistory || []}
+                  labelForYes="Part 4 - Question 9.A Address"
+                  labelForNo="Mailing Address"
+                />
+              )}
+            </div>
+          );
+        },
+        edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <FormGroup
+              id={`${id}-form-send-notice-location`}
+              errorMessages={hookFormUtils.getErrorMessages(errors, 'sendNoticeToMailingAddress')}
+              key="fg-send-notice-to-mailing"
+            >
+              <Controller
+                name="sendNoticeToMailingAddress"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Select
+                    type={SelectType.primary}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    id={`${id}-sendNoticeToMailingAddress-select`}
+                    size={SelectSize.fill}
+                    value={value}
+                    required
+                  >
+                    {[
+                      { label: 'Mailing Address', value: 'true' },
+                      { label: 'Part 4 - Question 9.A Address', value: 'false' },
+                    ].map((noticeLocation) => {
+                      return (
+                        <SelectOption
+                          id={`${id}-${noticeLocation.label}-id`}
+                          value={noticeLocation.value}
+                          key={noticeLocation.label}
+                        >
+                          {noticeLocation.label}
+                        </SelectOption>
+                      );
+                    })}
+                  </Select>
+                )}
+              />
+            </FormGroup>
+          );
+        },
+        actions: (
+          field: unknown,
+          record: DeliveryInformationData | undefined,
+          index: number,
+          toggle: () => void
+        ) => {
+          return [
+            {
+              label: 'Expand History',
+              labelSecondary: 'Collapse',
+              onClick: toggle,
+            },
+          ];
+        },
+      },
+      {
+        label: 'Document Notification Mailing Address',
+        isFieldRequired: false,
+        readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          const address =
+            data?.sendNoticeToMailingAddressHistory?.[0]?.caseQuestRespIndCd === 'N'
+              ? data?.mailingAddressHistory?.latest?.item
+              : data?.notificationAddressHistory?.latest?.item;
+          const isUSAddress = address?.countryCode === 'USA';
+          return (
+            <div className="d-flex" title="Document Notification Mailing Address">
+              {address && (
+                <div className="pl-2">
+                  <div>
+                    <span>{address.streetAddress1Text}</span>{' '}
+                    <span>
+                      {address.streetAddress2Text}
+                      {address.unitTypeCode}
+                      {address.suiteApartmentNumber}
+                    </span>
+                  </div>
+                  <div>
+                    {address.cityName && <span>{` ${address.cityName}`}</span>}
+                    {address.stateCode && isUSAddress && <span>{`, ${address.stateCode}`}</span>}
+                    {address.postalZipCode && isUSAddress && <span>{` ${address.postalZipCode}`}</span>}
+                    {address.provinceNm && !isUSAddress && <span>{` ${address.provinceNm}`}</span>}
+                    {address.postalCode && !isUSAddress && <span>{` ${address.postalCode}`}</span>}
+                    <span>{`, ${resolveCountryName(address.countryCode, countryList)}`}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        },
+        badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          const sendToMailingAddress =
+            data?.sendNoticeToMailingAddressHistory?.[0]?.caseQuestRespIndCd === 'N';
+          const address = sendToMailingAddress
+            ? data?.mailingAddressHistory?.latest?.item
+            : data?.notificationAddressHistory?.latest?.item;
+          return (
+            <div>
+              {sendToMailingAddress && data?.reppedWithSecureDocs && (
+                <Badge id={`${id}-repped-badge`} variant={BadgeVariant.info} showIcon={false}>
+                  G-28
+                </Badge>
+              )}
+              <DataviewUpdatedBadge
+                revisionNumber={address?.revisionNumber || 0}
+                id={`${id}-doc-mailing-dest-city-updated-badge`}
+              />
+            </div>
+          );
+        },
+        details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          const addressHistories =
+            data?.sendNoticeToMailingAddressHistory?.[0]?.caseQuestRespIndCd === 'N'
+              ? data?.mailingAddressHistory
+              : data?.notificationAddressHistory;
+          return (
+            <div>
+              {!isEditable && <HistoricalAddressDetails data={addressHistories} countryList={countryList} />}
+            </div>
+          );
+        },
+        edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          if (
+            formSendNoticeToMailingAddress === 'true' ||
+            (formSendNoticeToMailingAddress === undefined && data?.sendNoticeToMailingAddress)
+          ) {
+            return (
+              <div>
+                <Alert variant={AlertVariant.info}>
+                  {data?.reppedWithSecureDocs
+                    ? 'Representative address can be edited in Representative Info'
+                    : 'Mailing address can be edited in Names, Dates of Birth, Contacts'}
+                </Alert>
+                <ReadOnlyAddressForm
+                  countryList={countryList}
+                  stateCodes={stateCodes}
+                  address={data?.mailingAddressHistory?.latest?.item}
+                  id={id}
+                />
+              </div>
+            );
+          } else if (
+            formSendNoticeToMailingAddress === 'false' ||
+            (formSendNoticeToMailingAddress === undefined && data?.sendNoticeToMailingAddress === false)
+          ) {
+            return (
+              <FormProvider {...deliveryInformationForm}>
+                <AddressForm id={id} countryList={countryList} stateCodes={stateCodes} />
+              </FormProvider>
+            );
+          } else {
+            return <div></div>;
+          }
+        },
+        actions: (
+          field: unknown,
+          record: DeliveryInformationData | undefined,
+          index: number,
+          toggle: () => void
+        ) => {
+          return [
+            {
+              label: 'Expand History',
+              labelSecondary: 'Collapse',
+              onClick: toggle,
+            },
+          ];
+        },
+      },
+
+      {
+        label: 'Daytime Phone',
+        field: 'notificationPhoneHistory?.latest?.item',
+        isFieldRequired: false,
+        readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <div className="d-flex" title="Daytime Phone">
+              <div className="pl-2">{data?.notificationPhoneHistory?.latest?.item}</div>
+            </div>
+          );
+        },
+        badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <DataviewUpdatedBadge
+              revisionNumber={data?.notificationPhoneHistory?.latest?.revisionNumber}
+              id={`${id}-doc-notice-email-updated-badge`}
+            />
+          );
+        },
+        details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <div>
+              {!isEditable && <HistoricalGenericStringDetails data={data?.notificationPhoneHistory} />}
+            </div>
+          );
+        },
+        edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <FormGroup
+              id={`${id}-form-notice-phone-fg`}
+              errorMessages={hookFormUtils.getErrorMessages(errors, 'noticePhone')}
+              key="fg-phone"
+            >
+              <Controller
+                name="noticePhone"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    id={`${id}-form-notice-phone`}
+                    key={`form-notice-phone`}
+                    value={value}
+                    maxLength={25}
+                    onBlur={onBlur}
+                    onChange={onChange}
+                  />
+                )}
+              />
+            </FormGroup>
+          );
+        },
+        actions: (
+          field: unknown,
+          record: DeliveryInformationData | undefined,
+          index: number,
+          toggle: () => void
+        ) => {
+          return [
+            {
+              label: 'Expand History',
+              labelSecondary: 'Collapse',
+              onClick: toggle,
+            },
+          ];
+        },
+      },
+      {
+        label: 'Email',
+        field: 'notificationEmailHistory?.latest?.item',
+        isFieldRequired: false,
+        readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <div className="d-flex" title="Email">
+              <div className="pl-2">{data?.notificationEmailHistory?.latest?.item}</div>
+            </div>
+          );
+        },
+        badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <DataviewUpdatedBadge
+              revisionNumber={data?.notificationEmailHistory?.latest?.revisionNumber}
+              id={`${id}-doc-notice-email-updated-badge`}
+            />
+          );
+        },
+        details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+          return (
+            <div>
+              {!isEditable && <HistoricalGenericStringDetails data={data?.notificationEmailHistory} />}
+            </div>
+          );
+        },
+        edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+          return (
+            <FormGroup
+              id={`${id}-form-notice-email-fg`}
+              errorMessages={hookFormUtils.getErrorMessages(errors, 'noticeEmail')}
+              key="fg-email"
+            >
+              <Controller
+                name="noticeEmail"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    id={`${id}-form-notice-email`}
+                    key={`form-notice-email`}
+                    value={value}
+                    maxLength={100}
+                    onBlur={onBlur}
+                    onChange={onChange}
+                  />
+                )}
+              />
+            </FormGroup>
+          );
+        },
+        actions: (
+          field: unknown,
+          record: DeliveryInformationData | undefined,
+          index: number,
+          toggle: () => void
+        ) => {
+          return [
+            {
+              label: 'Expand History',
+              labelSecondary: 'Collapse',
+              onClick: toggle,
+            },
+          ];
+        },
+      }
+    );
+  }
+  if (
+    formSendTravelDocumentToApplicantSelection === 'true' ||
+    (formSendTravelDocumentToApplicantSelection === undefined && data?.sendTravelDocumentToApplicant)
+  ) {
+    fields.push({
+      label: (
+        <div className={styles['data-view-label']}>
+          <span>Current Mailing Address</span>
+        </div>
+      ),
+      badge: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+        return (
+          <div>
+            <span>
+              {data?.reppedWithSecureDocs && (
+                <Badge id={`${id}-repped-badge`} variant={BadgeVariant.info} showIcon={false}>
+                  G-28
+                </Badge>
+              )}
+            </span>
+            <DataviewUpdatedBadge
+              revisionNumber={data?.mailingAddressHistory?.latest?.revisionNumber}
+              id={`${id}-doc-mailing-dest-city-updated-badge`}
+            />
+          </div>
+        );
+      },
+      readonly: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+        const address = data?.mailingAddressHistory?.latest?.item;
+        const isUSAddress = address?.countryCode === 'USA';
+        return (
+          <div className="d-flex" title="Document Notification Mailing Address">
+            {address && (
+              <div className="pl-2">
+                <div>
+                  <span>{address.streetAddress1Text}</span>{' '}
+                  <span>
+                    {address.streetAddress2Text}
+                    {address.unitTypeCode}
+                    {address.suiteApartmentNumber}
+                  </span>
+                </div>
+                <div>
+                  {address.cityName && <span>{` ${address.cityName}`}</span>}
+                  {address.stateCode && isUSAddress && <span>{`, ${address.stateCode}`}</span>}
+                  {address.postalZipCode && isUSAddress && <span>{` ${address.postalZipCode}`}</span>}
+                  {address.provinceNm && !isUSAddress && <span>{` ${address.provinceNm}`}</span>}
+                  {address.postalCode && !isUSAddress && <span>{` ${address.postalCode}`}</span>}
+                  <span>{`, ${resolveCountryName(address.countryCode, countryList)}`}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      },
+      details: (value: unknown, data: DeliveryInformationData | undefined, index: number) => {
+        return (
+          <div>
+            {!isEditable && (
+              <HistoricalAddressDetails data={data?.mailingAddressHistory} countryList={countryList} />
+            )}
+          </div>
+        );
+      },
+      edit: (value: unknown, data: DeliveryInformationData | undefined, index: number): ReactNode => {
+        return (
+          <div>
+            <Alert variant={AlertVariant.info}>
+              {data?.reppedWithSecureDocs
+                ? 'Representative address can be edited in Representative Info'
+                : 'Mailing address can be edited in Names, Dates of Birth, Contacts'}
+            </Alert>
+            <ReadOnlyAddressForm
+              countryList={countryList}
+              stateCodes={stateCodes}
+              address={data?.mailingAddressHistory?.latest?.item}
+              id={id}
+            />
+          </div>
+        );
+      },
+      actions: (
+        field: unknown,
+        record: DeliveryInformationData | undefined,
+        index: number,
+        toggle: () => void
+      ) => {
+        return [
+          {
+            label: 'Expand History',
+            labelSecondary: 'Collapse',
+            onClick: toggle,
+          },
+        ];
+      },
+    });
+  }
+
+  const toolbar = (
+    <Button
+      id={`${id}-btn-edit`}
+      type={ButtonType.tertiary}
+      onClick={() => {
+        setIsEditable(true);
+      }}
+      disabled={isReadOnly}
+    >
+      <Icon type={IconType.pencilAlt} />
+      Edit
+    </Button>
+  );
+
+  const footerBar = [
+    <Button
+      id={`${id}-btn-cancel`}
+      key={`${id}-btn-cancel`}
+      onClick={() => {
+        setIsEditable(false);
+        resetFormData();
+      }}
+      type={ButtonType.secondary}
+    >
+      Cancel
+    </Button>,
+    <SubmitButton id={`${id}-btn-save`} key={`${id}-btn-save`} disabled={!isSubmittable}>
+      Save
+    </SubmitButton>,
+  ];
+
+  const onSubmit = async (formData: DeliveryInformationData) => {
+    updateDeliveryInformation({ data: { ...formData } }).then(() => {
+      setIsEditable(false);
+      getDeliveryInformationData();
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className={styles['delivery-information']}>
+      <DataView
+        data={data}
+        fields={fields}
+        title={isRenderDecisionView ? 'Review Applicant Data' : 'Requested Delivery Location'}
+        id={''}
+        isEditable={isEditable}
+        toolbar={toolbar}
+        footerBar={footerBar}
+      />
+    </form>
+  );
+};
+
+
+
+import { DeliveryInformation } from './delivery-information';
+import { MOCK_CIS_CASE } from '../../../i129h1b/header/i129h1b-case-review-header.mocks';
+import {
+  GET_DELIVERY_INFO_MOCK_US,
+  GET_DELIVERY_INFO_MOCK_US_REP,
+  GET_DELIVERY_INFO_MOCK_FOREIGN_NOTIFY_ALT,
+  GET_DELIVERY_INFO_MOCK_FOREIGN_NOTIFY_MAILING,
+  GET_DELIVERY_INFO_MOCK_FOREIGN_NOTIFY_MAILING_US,
+  GET_DELIVERY_INFO_MOCK_US_WITH_FOREIGN_REP_ADDR,
+  GET_DELIVERY_INFO_MOCK_ERROR,
+  GET_DELIVERY_INFO_MOCK_NO_DATA,
+  POST_DELIVERY_INFO_UPDATE,
+} from '../__test-data__/i131-rp-and-rtd.mocks';
+import { Provider } from 'react-redux';
+import { IRefData, setRefData, store } from '@uscis/elis/state';
+import { MOCK_REF_DATA, server } from '@uscis/elis/testing';
+import { render, screen, selectOption, waitFor } from '@uscis/elis/testing/library';
+import userEvent from '@testing-library/user-event';
+
+describe('Delivery Information', () => {
+  beforeEach(() => {
+    server.use(GET_DELIVERY_INFO_MOCK_US, POST_DELIVERY_INFO_UPDATE);
+  });
+
+  test('renders data for delivery to applicant', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_US);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+  });
+
+  test('renders data for delivery to consulate with mailer to alt address', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_FOREIGN_NOTIFY_ALT);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '562' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+  });
+
+  test('renders data for delivery to consulate with mailer to mailing address', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_FOREIGN_NOTIFY_MAILING);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '563' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+  });
+
+  test('shows a G-28 badge if secure docs is enabled', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_US_REP);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '563' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    expect(screen.queryByText(/G-28/)).toBeTruthy();
+  });
+
+  test('shows a G-28 badge if secure docs is enabled for US mailing', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_US_REP);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '563' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    expect(screen.queryByText(/G-28/)).toBeTruthy();
+  });
+
+  test('shows a G-28 badge if secure docs is enabled for consulate mailing', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_US_WITH_FOREIGN_REP_ADDR);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    expect(screen.queryByText(/G-28/)).toBeTruthy();
+  });
+
+  test('renders data for delivery to consulate with US mailer', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_FOREIGN_NOTIFY_MAILING_US);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+  });
+
+  test('can edit and cancel edit', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_ERROR);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    userEvent.click(await screen.findByText('Edit'));
+
+    const cancelButton = await screen.findByText('Cancel');
+    userEvent.click(cancelButton);
+    await waitFor(() => expect(screen.queryByText('Cancel')).toBeFalsy());
+  });
+
+  test('shows an informational message for editing applicant mailing', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_US);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    await screen.findByText(/111 SOUTH WABASH/);
+    userEvent.click(await screen.findByText('Edit'));
+    await screen.findByText(/Mailing address can be edited in Names, Dates of Birth, Contacts/);
+  });
+
+  test('shows an informational message for editing representatives', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_US_REP);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    await screen.findByText(/111 SOUTH WABASH/);
+    userEvent.click(await screen.findByText('Edit'));
+    await screen.findByText(/Representative address can be edited in Representative Info/);
+  });
+
+  test('shows an validation errors on required selections', async () => {
+    server.use(GET_DELIVERY_INFO_MOCK_ERROR);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    userEvent.click(await screen.findByText('Edit'));
+    await screen.findByText(/Travel Document destination is required/);
+
+    await screen.findByElementId('delivery-info-sendTravelDocumentToApplicant-select');
+    await selectOption('delivery-info-sendTravelDocumentToApplicant-select', 'Consulate/Embassy');
+    expect(await screen.findByText(/Document Notification Destination/)).toBeTruthy();
+
+    const saveButton = await screen.findByText('Save');
+    userEvent.click(saveButton);
+    await screen.findByText(/Notice destination is required/);
+  });
+
+  test('allows editing notice address', async () => {
+    const refData: IRefData = {
+      ...MOCK_REF_DATA,
+      stateCodes: [
+        {
+          stateCode: 'DE',
+          stateName: 'Delaware',
+        },
+        {
+          stateCode: 'VA',
+          stateName: 'Virginia',
+        },
+        {
+          stateCode: 'MD',
+          stateName: 'Maryland',
+        },
+      ],
+      countryCodes: [
+        {
+          countryCode: 'USA',
+          countryName: 'United States',
+          c4CountryCode: 'USA',
+        },
+        {
+          countryCode: 'GBR',
+          countryName: 'Great Britain',
+          c4CountryCode: 'GBR',
+        },
+      ],
+    };
+    store.dispatch(setRefData(refData));
+
+    server.use(GET_DELIVERY_INFO_MOCK_NO_DATA);
+    render(
+      <Provider store={store}>
+        <DeliveryInformation id={'delivery-info'} cisCase={{ ...MOCK_CIS_CASE, caseFilingTypeCode: '565' }} />
+      </Provider>
+    );
+
+    expect(await screen.findByText(/Required Delivery Information/)).toBeTruthy();
+    userEvent.click(await screen.findByText('Edit'));
+    await screen.findByText(/Travel Document destination is required/);
+
+    await screen.findByElementId('delivery-info-sendTravelDocumentToApplicant-select');
+    await selectOption('delivery-info-sendTravelDocumentToApplicant-select', 'Consulate/Embassy');
+    expect(await screen.findByText(/Document Notification Destination/)).toBeTruthy();
+
+    await selectOption('delivery-info-sendNoticeToMailingAddress-select', 'Part 4 - Question 9.A Address');
+    await screen.findByElementId('delivery-info-in-care-of');
+    userEvent.type(screen.getByElementId('delivery-info-in-care-of'), 'Fred');
+
+    await selectOption('delivery-info-sel-country', 'Great Britain');
+    await selectOption('delivery-info-sel-country', 'United States');
+
+    await selectOption('delivery-info-sel-unit-type-code', 'APT.');
+    const selectUnitType = await screen.findByElementId('delivery-info-fg-unit-type');
+    const clearUnitType = selectUnitType.querySelector('[aria-label="Clear Input"]') as HTMLInputElement;
+    userEvent.click(clearUnitType);
+
+    const saveButton = await screen.findByText('Save');
+    userEvent.click(saveButton);
+    await waitFor(() => expect(screen.queryByText('Save')).toBeFalsy());
+  });
+});
