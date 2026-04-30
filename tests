@@ -1,0 +1,552 @@
+import { ADMITTANCE_TYPES, I131RpRtdRdAdmittance } from './admittance/i131-rp-rtd-rd-admittance';
+import {
+  I131RpRtdRdValidityPeriod,
+  VALIDITY_PERIOD_TYPE,
+} from './validity-period/i131-rp-rtd-rd-validity-period';
+import { ICISCase, INTERNAL_APP, RenderDecisionView } from '@uscis/elis/domain';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { getTodaysDateFormatted, getValidityPeriodEndDateFormatted } from './utils';
+import { ConsulateOrEmbassyAddress } from './mailing-address/consulate-or-embassy-address';
+import { useAxios } from '@uscis/elis/configuration';
+
+export type I131RpRtdRdValidityPeriodType = {
+  validityPeriodType: number;
+  startValidity: string;
+  endValidity: string;
+  isValid: boolean;
+};
+
+export interface I131RpRtdRenderDecisionProps {
+  cisCase: ICISCase | undefined;
+  onUpdate: (data: I131RpRtdRenderDecisionType) => void;
+  isReadOnly?: boolean;
+  showConsulates?: boolean;
+  existingDecision?: RenderDecisionView;
+}
+
+export type I131RpRtdRenderDecisionType = {
+  consulate?: string;
+  validityPeriod: I131RpRtdRdValidityPeriodType;
+  admittance: string;
+};
+
+const RP_TYPE = '562';
+const NON_LPR_RTD_TYPES = ['563', '564'];
+const RP_LPR_RTD_TYPES = ['562', '565', '566'];
+
+const resolveValidityPeriodType = (startDateStr: string, endDateStr: string) => {
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  const daysDifference = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+  switch (daysDifference) {
+    case 365:
+      return VALIDITY_PERIOD_TYPE.ONE_YEAR;
+    case 730:
+      return VALIDITY_PERIOD_TYPE.TWO_YEARS;
+    default:
+      return VALIDITY_PERIOD_TYPE.CUSTOM;
+  }
+};
+
+export const I131RpRtdRenderDecision: React.FC<I131RpRtdRenderDecisionProps> = ({
+  cisCase,
+  onUpdate,
+  isReadOnly = false,
+  showConsulates = false,
+  existingDecision,
+}: I131RpRtdRenderDecisionProps) => {
+  const [initialized, setInitialized] = useState(false);
+  const [decisionData, setDecisionData] = useState<I131RpRtdRenderDecisionType>({
+    consulate: '',
+    validityPeriod: {
+      validityPeriodType: RP_TYPE === cisCase?.caseFilingTypeCode ? -1 : VALIDITY_PERIOD_TYPE.ONE_YEAR,
+      startValidity: getTodaysDateFormatted(),
+      endValidity: getValidityPeriodEndDateFormatted(getTodaysDateFormatted(), 1),
+      isValid: RP_TYPE !== cisCase?.caseFilingTypeCode,
+    },
+    admittance: RP_LPR_RTD_TYPES.includes(cisCase?.caseFilingTypeCode as string)
+      ? ADMITTANCE_TYPES.PERMANENT_RESIDENT
+      : '',
+  });
+
+  const [renderDecisionResponse, ] = useAxios<RenderDecisionView>({
+    url:  `${INTERNAL_APP}/cases/${cisCase?.caseId}/person/${cisCase?.personId}/decision/`,
+    method: 'GET',
+    headers: { 'Cache-Control': 'no-cache' },
+  }, {
+      useCache: false,
+    });
+  const { data: renderDecisionData, loading, error } = renderDecisionResponse;
+
+  const hasExecutedRenderDecisionRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!!existingDecision || (!!renderDecisionData && !hasExecutedRenderDecisionRef.current)) {
+      const previouslySaved = existingDecision ?? renderDecisionData as RenderDecisionView;
+      hasExecutedRenderDecisionRef.current = true;
+      setDecisionData((prev) => {
+        const newState = { ...prev, validityPeriod: { ...prev.validityPeriod } };
+        newState.validityPeriod = {
+          startValidity: previouslySaved.startDate,
+          endValidity: previouslySaved.endDate,
+          isValid: true,
+          validityPeriodType: resolveValidityPeriodType(previouslySaved.startDate, previouslySaved.endDate),
+        };
+        newState.consulate = previouslySaved.consulateOffice || '';
+        newState.admittance =
+          ADMITTANCE_TYPES[previouslySaved.classOfAdmission as keyof typeof ADMITTANCE_TYPES];
+        onUpdate(newState);
+        return newState;
+      });
+    }
+  }, [existingDecision, setDecisionData, onUpdate, renderDecisionData]);
+
+  const onConsulateUpdate = useCallback(
+    (consulate: string) => {
+      setDecisionData((prev) => {
+        const updated = { ...prev, consulate };
+        onUpdate(updated);
+        return updated;
+      });
+    },
+    [onUpdate]
+  );
+
+  const onValidityUpdate = useCallback(
+    (validityPeriod: I131RpRtdRdValidityPeriodType) => {
+      setDecisionData((prev) => {
+        if (
+          validityPeriod.endValidity !== prev?.validityPeriod.endValidity ||
+          validityPeriod.startValidity !== prev?.validityPeriod.startValidity ||
+          validityPeriod.validityPeriodType !== prev?.validityPeriod.validityPeriodType
+        ) {
+          const updated = { ...prev, validityPeriod };
+          onUpdate(updated);
+          return updated;
+        }
+        return prev;
+      });
+    },
+    [onUpdate]
+  );
+
+  const onAdmittanceUpdate = useCallback(
+    (admittance: string) => {
+      setDecisionData((prev) => {
+        const updated = { ...prev, admittance };
+        onUpdate(updated);
+        return updated;
+      });
+    },
+    [onUpdate]
+  );
+
+  useEffect(() => {
+    if (!initialized) {
+      onUpdate(decisionData);
+      setInitialized(true);
+    }
+  }, [initialized, decisionData, onUpdate]);
+
+  return (
+    <div className="pb-4">
+      {showConsulates && (
+        <ConsulateOrEmbassyAddress
+          selectedConsulate={decisionData?.consulate || ''}
+          onUpdate={onConsulateUpdate}
+          readOnly={isReadOnly}
+        />
+      )}
+      <I131RpRtdRdValidityPeriod
+        onUpdate={onValidityUpdate}
+        readOnly={isReadOnly}
+        currentState={decisionData?.validityPeriod}
+      />
+      <I131RpRtdRdAdmittance
+        readOnly={isReadOnly || !NON_LPR_RTD_TYPES.includes(cisCase?.caseFilingTypeCode as string)}
+        currentState={decisionData.admittance}
+        onUpdate={onAdmittanceUpdate}
+      />
+    </div>
+  );
+};
+import { render, waitFor } from '@testing-library/react';
+import React from 'react';
+import { I131RpRtdRenderDecision } from './i131-rp-rtd-render-decision'; import { CISCASE_FROM_STORE, MOCK_REF_DATA } from '@uscis/elis/testing'; import { selectOption, screen } from '@uscis/elis/testing/library'; import { Provider } from 'react-redux';
+import { IRefData, setRefData, store } from '@uscis/elis/state'; import userEvent from '@testing-library/user-event';
+import { RenderDecisionView } from '@uscis/elis/domain';
+import { ADMITTANCE_TYPES } from './admittance/i131-rp-rtd-rd-admittance';
+import { VALIDITY_PERIOD_TYPE } from './validity-period/i131-rp-rtd-rd-validity-period';
+
+interface RDUpdate {
+  consulate?: string;
+  validityPeriod: {
+    validityPeriodType: number;
+    startValidity: string;
+    endValidity: string;
+    isValid: boolean;
+  };
+  admittance: string;
+}
+
+describe('I131RpRtdRenderDecision', () => {
+  test('Renders without a cisCase', async () => {
+    render(<I131RpRtdRenderDecision cisCase={undefined} onUpdate={jest.fn()} isReadOnly={false} />);
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+  });
+
+  test('Validity period is not auto populated for I-131 RP', async () => {
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: 99,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '562' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+        />
+      </Provider>
+    );
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+    expect(latestData.validityPeriod.validityPeriodType).toBe(-1);
+  });
+
+  test('Updates the consulate data', async () => {
+    const refData: IRefData = {
+      ...MOCK_REF_DATA,
+      consulate: [
+        {
+          consulateCode: 'ABC',
+          consulateDesc: 'Alphabet',
+          currInd: '0',
+        },
+      ],
+    };
+    store.dispatch(setRefData(refData));
+
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: 0,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '563' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+          showConsulates={true}
+        />
+      </Provider>
+    );
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+    await selectOption('consulate-office-selection', 'Alphabet');
+    expect(latestData.consulate).toBe('ABC');
+  });
+
+  test('Updates the validity period', async () => {
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: 0,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '562' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+        />
+      </Provider>
+    );
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+    userEvent.click(await screen.findByElementId('two-years-validity'));
+    expect(latestData.validityPeriod.validityPeriodType).toBe(2);
+  });
+
+  test('Updates the validity period to custom', async () => {
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: -1,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '562' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+        />
+      </Provider>
+    );
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+    userEvent.click(await screen.findByElementId('custom-validity'));
+    userEvent.type(await screen.findByElementId('validity-period-end-date'), '04/20/2050');
+    expect(latestData.validityPeriod.validityPeriodType).toBe(0);
+    expect(latestData.validityPeriod.endValidity).toBe('04/20/2050');
+  });
+
+  test('Updates the admittance', async () => {
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: 0,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '563' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+        />
+      </Provider>
+    );
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+    await selectOption('admittance-selection', 'Refugee');
+    expect(latestData.admittance).toBe('Refugee');
+  });
+
+  test('Updates everything and maintains state across updates', async () => {
+    const refData: IRefData = {
+      ...MOCK_REF_DATA,
+      consulate: [
+        {
+          consulateCode: 'JAM',
+          consulateDesc: 'Jamaica',
+          currInd: '0',
+        },
+        { consulateCode: 'HAM', consulateDesc: 'Hamaica', currInd: '1' },
+      ],
+    };
+    store.dispatch(setRefData(refData));
+
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: 0,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '563' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+          showConsulates={true}
+        />
+      </Provider>
+    );
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+    await selectOption('consulate-office-selection', 'Jamaica');
+
+    userEvent.click(await screen.findByElementId('custom-validity'));
+    userEvent.type(await screen.findByElementId('validity-period-end-date'), '04/20/2050');
+
+    await selectOption('admittance-selection', 'Refugee');
+    await selectOption('admittance-selection', 'Asylee');
+
+    await selectOption('consulate-office-selection', 'Hamaica');
+
+    expect(latestData.consulate).toBe('HAM');
+    expect(latestData.validityPeriod.validityPeriodType).toBe(0);
+    expect(latestData.validityPeriod.endValidity).toBe('04/20/2050');
+    expect(latestData.admittance).toBe('Asylee');
+  });
+
+  test('Defaults to one year validity and permanent resident for LPR RTD types', async () => {
+    let latestData: RDUpdate = {
+      consulate: '',
+      validityPeriod: {
+        validityPeriodType: 0,
+        startValidity: '',
+        endValidity: '',
+        isValid: false,
+      },
+      admittance: '',
+    };
+    const onUpdate = (data: RDUpdate) => {
+      latestData = data;
+    };
+
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '565' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+        />
+      </Provider>
+    );
+
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+
+    await waitFor(() => {
+      expect(latestData.validityPeriod.validityPeriodType).toBe(VALIDITY_PERIOD_TYPE.ONE_YEAR);
+      expect(latestData.validityPeriod.isValid).toBe(true);
+      expect(latestData.admittance).toBe(ADMITTANCE_TYPES.PERMANENT_RESIDENT);
+    });
+  });
+
+  test('Loads existingDecision data with one year validity', async () => {
+    const onUpdate = jest.fn();
+
+    const existingDecision = {
+      startDate: '04/20/2024',
+      endDate: '04/20/2025',
+      consulateOffice: 'ABC',
+      classOfAdmission: 'REFUGEE',
+    } as RenderDecisionView;
+
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '563' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+          showConsulates={true}
+          existingDecision={existingDecision}
+        />
+      </Provider>
+    );
+
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+
+    await waitFor(() =>
+      expect(
+        onUpdate.mock.calls.some(
+          ([data]) =>
+            data.consulate === 'ABC' &&
+            data.validityPeriod.validityPeriodType === VALIDITY_PERIOD_TYPE.ONE_YEAR &&
+            data.validityPeriod.startValidity === '04/20/2024' &&
+            data.validityPeriod.endValidity === '04/20/2025' &&
+            data.admittance === ADMITTANCE_TYPES.REFUGEE
+        )
+      ).toBe(true)
+    );
+  });
+
+  test('Loads existingDecision data with two year validity', async () => {
+    const onUpdate = jest.fn();
+
+    const existingDecision = {
+      startDate: '04/20/2024',
+      endDate: '04/20/2026',
+      consulateOffice: 'ABC',
+      classOfAdmission: 'ASYLEE',
+    } as RenderDecisionView;
+
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '563' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+          showConsulates={true}
+          existingDecision={existingDecision}
+        />
+      </Provider>
+    );
+
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+
+    await waitFor(() =>
+      expect(
+        onUpdate.mock.calls.some(
+          ([data]) =>
+            data.consulate === 'ABC' &&
+            data.validityPeriod.validityPeriodType === VALIDITY_PERIOD_TYPE.TWO_YEARS &&
+            data.validityPeriod.startValidity === '04/20/2024' &&
+            data.validityPeriod.endValidity === '04/20/2026' &&
+            data.admittance === ADMITTANCE_TYPES.ASYLEE
+        )
+      ).toBe(true)
+    );
+  });
+
+  test('Loads existingDecision data with custom validity and blank consulate fallback', async () => {
+    const onUpdate = jest.fn();
+
+    const existingDecision = {
+      startDate: '04/20/2024',
+      endDate: '04/21/2025',
+      classOfAdmission: 'REFUGEE',
+    } as RenderDecisionView;
+
+    render(
+      <Provider store={store}>
+        <I131RpRtdRenderDecision
+          cisCase={{ ...CISCASE_FROM_STORE, caseFilingTypeCode: '563' }}
+          onUpdate={onUpdate}
+          isReadOnly={false}
+          showConsulates={true}
+          existingDecision={existingDecision}
+        />
+      </Provider>
+    );
+
+    expect(await screen.findAllByText(/Travel Document Validity/)).toBeTruthy();
+
+    await waitFor(() =>
+      expect(
+        onUpdate.mock.calls.some(
+          ([data]) =>
+            data.consulate === '' &&
+            data.validityPeriod.validityPeriodType === VALIDITY_PERIOD_TYPE.CUSTOM &&
+            data.validityPeriod.startValidity === '04/20/2024' &&
+            data.validityPeriod.endValidity === '04/21/2025' &&
+            data.admittance === ADMITTANCE_TYPES.REFUGEE
+        )
+      ).toBe(true)
+    );
+  });
+});
