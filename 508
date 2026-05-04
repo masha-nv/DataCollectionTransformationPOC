@@ -1,0 +1,110 @@
+import { Datatable, SearchBar, WithId } from '@elis/react-beacon';
+import { AlienNumberLink, ReceiptNumberLink } from '@uscis/elis/links';
+import React, { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { IWorkLogResult } from './work-log-results.types';
+
+const getFormattedDateFromNumber = (dateNumber: number) =>
+  `${new Date(dateNumber)?.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric',
+  })} ${new Date(dateNumber)?.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  })}`;
+
+const getWorkLogResultCoulmns = (id: string, isTaskBased?: boolean) => [
+  {
+    id: 'formType',
+    name: 'Form Type',
+    selector: 'formType',
+  },
+  {
+    id: 'receiptNumber',
+    name: 'Receipt Number',
+    cell: (row: IWorkLogResult) =>
+      row.receiptNumber && (
+        <ReceiptNumberLink id={`${id}-receipt-number`} receiptNumber={row.receiptNumber} />
+      ),
+    selector: 'receiptNumber',
+  },
+  {
+    id: 'alienNumber',
+    name: 'Alien Number',
+    cell: (row: IWorkLogResult) =>
+      row.alienNumber && <AlienNumberLink id={`${id}-alien-number`} alienNumber={row.alienNumber} />,
+    selector: 'alienNumber',
+  },
+  {
+    id: 'workTypeCode',
+    name: isTaskBased ? 'Task When Assigned' : 'Work Queue When Assigned',
+    selector: (row: IWorkLogResult) => row.workTypeCode || row.taskTypeDesc,
+  },
+  {
+    id: 'createdDate',
+    name: 'Date Assigned',
+    cell: (row: IWorkLogResult) => getFormattedDateFromNumber(row.createdDate),
+    selector: 'createdDate',
+  },
+  {
+    id: 'updatedDate',
+    name: 'Date Completed',
+    cell: (row: IWorkLogResult) => getFormattedDateFromNumber(row.updatedDate),
+    selector: 'updatedDate',
+  },
+];
+
+const onFilter = (
+  filterText: string,
+  results: IWorkLogResult[],
+  setFilteredData: Dispatch<SetStateAction<IWorkLogResult[]>>
+) => {
+  const filterTextLower = filterText.toLowerCase();
+  setFilteredData(
+    results.filter((result) =>
+      [
+        result.formType,
+        result.receiptNumber,
+        result.alienNumber,
+        result.workTypeCode,
+        result.taskTypeDesc,
+        getFormattedDateFromNumber(result.createdDate),
+        getFormattedDateFromNumber(result.updatedDate),
+      ].some((resultValue) => resultValue?.toLowerCase().includes(filterTextLower))
+    )
+  );
+};
+
+export interface IWorkLogResultsProps extends WithId {
+  isTaskBased?: boolean;
+  results: IWorkLogResult[];
+}
+
+export const WorkLogResults: React.FC<IWorkLogResultsProps> = (props) => {
+  const [filteredData, setFilteredData] = useState<IWorkLogResult[]>(props.results);
+  useEffect(() => setFilteredData(props.results), [props.results]);
+
+  return (
+    <Datatable
+      id={`${props.id}-table`}
+      title={props.isTaskBased ? 'My Completed Tasks' : 'My Completed Assignments'}
+      columns={getWorkLogResultCoulmns(props.id, props.isTaskBased)}
+      data={filteredData}
+      headingType={'h3'}
+      defaultSortField={'updatedDate'}
+      defaultSortAsc={false}
+      actions={
+        <SearchBar
+          id={`${props.id}-table-search`}
+          hideResults
+          allowEmpty
+          onChange={(e: ChangeEvent<HTMLInputElement>, value: string) =>
+            onFilter(value, props.results, setFilteredData)
+          }
+        />
+      }
+    />
+  );
+};
