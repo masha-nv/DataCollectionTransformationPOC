@@ -1,0 +1,128 @@
+{
+  "version": 2,
+  "projects": {
+    "beacon": {
+      "root": "libs/beacon",
+      "sourceRoot": "libs/beacon/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/beacon/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "build": {
+          "executor": "@nrwl/web:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/beacon",
+            "tsConfig": "libs/beacon/tsconfig.lib.json",
+            "project": "libs/beacon/package.json",
+            "entryFile": "libs/beacon/src/index.ts",
+            "external": ["react", "react-dom"],
+            "babelConfig": "@nrwl/react/plugins/bundle-babel",
+            "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
+            "assets": [
+              {
+                "glob": "README.md",
+                "input": ".",
+                "output": "."
+              }
+            ]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/beacon"],
+          "options": {
+            "jestConfig": "libs/beacon/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "typecheck": {
+          "executor": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npx tsc -p libs/beacon/tsconfig.spec.json --noEmit --incremental && npx tsc -p libs/beacon/.storybook/tsconfig.json --noEmit --incremental"
+          }
+        },
+        "storybook": {
+          "executor": "@nrwl/storybook:storybook",
+          "options": {
+            "uiFramework": "@storybook/react",
+            "port": 4400,
+            "config": {
+              "configFolder": "libs/beacon/.storybook"
+            }
+          },
+          "configurations": {
+            "ci": {
+              "quiet": true
+            }
+          }
+        },
+        "build-storybook": {
+          "executor": "@nrwl/storybook:build",
+          "options": {
+            "uiFramework": "@storybook/react",
+            "outputPath": "docs",
+            "config": {
+              "configFolder": "libs/beacon/.storybook"
+            }
+          },
+          "configurations": {
+            "ci": {
+              "quiet": true
+            }
+          }
+        }
+      }
+    },
+    "beacon-e2e": {
+      "root": "apps/beacon-e2e",
+      "sourceRoot": "apps/beacon-e2e/src",
+      "projectType": "application",
+      "targets": {
+        "e2e": {
+          "executor": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/beacon-e2e/cypress.json",
+            "tsConfig": "apps/beacon-e2e/tsconfig.e2e.json",
+            "devServerTarget": "beacon:storybook"
+          },
+          "configurations": {
+            "ci": {
+              "devServerTarget": "beacon:storybook:ci"
+            }
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/beacon-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/react"
+  },
+  "generators": {
+    "@nrwl/react": {
+      "application": {
+        "style": "scss",
+        "linter": "eslint",
+        "babel": true
+      },
+      "component": {
+        "style": "scss"
+      },
+      "library": {
+        "style": "scss",
+        "linter": "eslint"
+      }
+    }
+  },
+  "defaultProject": "beacon"
+}
